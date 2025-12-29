@@ -1,0 +1,74 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Test (macOS)
+    runs-on: macos-15
+    steps:
+      # -----------------------------------------------------------------------
+      # Setup
+      # -----------------------------------------------------------------------
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: "16.1"
+
+      - name: Show Swift version
+        run: swift --version
+
+      # -----------------------------------------------------------------------
+      # Cache
+      # -----------------------------------------------------------------------
+      - name: Cache Mint packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.mint
+          key: ${{ runner.os }}-mint-${{ hashFiles('Mintfile') }}
+          restore-keys: |
+            ${{ runner.os }}-mint-
+
+      - name: Cache Swift Package Manager
+        uses: actions/cache@v4
+        with:
+          path: .build
+          key: ${{ runner.os }}-spm-${{ hashFiles('Package.resolved') }}
+          restore-keys: |
+            ${{ runner.os }}-spm-
+
+      # -----------------------------------------------------------------------
+      # Install Dependencies
+      # -----------------------------------------------------------------------
+      - name: Install Mint
+        run: brew install mint
+
+      - name: Setup
+        run: make setup
+
+      # -----------------------------------------------------------------------
+      # Build & Test
+      # -----------------------------------------------------------------------
+      - name: Build
+        run: make build
+
+      - name: Lint
+        run: make lint
+
+      - name: Format Check
+        run: make format-check
+
+      - name: Test
+        run: make test
+

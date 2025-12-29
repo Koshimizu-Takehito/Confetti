@@ -1,0 +1,59 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":timezone(Asia/Tokyo)",
+    ":prHourlyLimitNone",
+    ":prConcurrentLimitNone",
+    "schedule:weekly"
+  ],
+  "labels": [
+    "dependencies"
+  ],
+  "packageRules": [
+    {
+      "matchUpdateTypes": [
+        "patch",
+        "minor"
+      ],
+      "automerge": true
+    },
+    {
+      "matchManagers": [
+        "swift"
+      ],
+      "addLabels": [
+        "swift"
+      ]
+    },
+    {
+      "matchManagers": [
+        "github-actions"
+      ],
+      "addLabels": [
+        "ci"
+      ]
+    },
+    {
+      "matchManagers": [
+        "custom.regex"
+      ],
+      "addLabels": [
+        "tooling"
+      ]
+    }
+  ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/^Mintfile$/"
+      ],
+      "matchStrings": [
+        "(?<depName>[\\w-]+/[\\w-]+)@(?<currentValue>[\\d.]+)"
+      ],
+      "datasourceTemplate": "github-releases"
+    }
+  ]
+}
+
