@@ -253,7 +253,7 @@ private struct LongPressButton: View {
                 .onChanged { _ in
                     if !isPressed {
                         isPressed = true
-                        startProgress()
+                        Task { try? await startProgress() }
                     }
                 }
                 .onEnded { _ in
@@ -263,17 +263,15 @@ private struct LongPressButton: View {
         )
     }
 
-    private func startProgress() {
+    private func startProgress() async throws {
         withAnimation(.linear(duration: duration)) {
             progress = 1
         }
-
-        DispatchQueue.main.asyncAfter(deadline: .now() + duration) {
-            if isPressed {
-                onTrigger()
-                isPressed = false
-                progress = 0
-            }
+        try await Task.sleep(for: .milliseconds(Int(1000 * duration)))
+        if isPressed {
+            onTrigger()
+            isPressed = false
+            progress = 0
         }
     }
 }
