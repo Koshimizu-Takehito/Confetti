@@ -1,7 +1,12 @@
 # Confetti
 
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FKoshimizu-Takehito%2FConfetti%2Fbadge%3Ftype%3Dswift-versions)](https://swiftpackageindex.com/Koshimizu-Takehito/Confetti) 
+[![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FKoshimizu-Takehito%2FConfetti%2Fbadge%3Ftype%3Dplatforms)](https://swiftpackageindex.com/Koshimizu-Takehito/Confetti) 
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/Koshimizu-Takehito/Confetti)
+
 &nbsp;
+
 [🇯🇵 日本語](./README.ja.md)
 
 **Confetti** is a Swift package that provides beautiful confetti animations for SwiftUI.
