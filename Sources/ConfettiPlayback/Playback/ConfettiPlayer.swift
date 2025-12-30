@@ -27,8 +27,8 @@ import Observation
 ///         CGColor(red: 0.2, green: 0.4, blue: 0.8, alpha: 1),
 ///         CGColor(red: 0.8, green: 0.2, blue: 0.4, alpha: 1),
 ///     ]
-///     mutating func nextColor(using rng: inout some RandomNumberGenerator) -> CGColor {
-///         colors.randomElement(using: &rng)!
+///     mutating func nextColor(using numberGenerator: inout some RandomNumberGenerator) -> CGColor {
+///         colors.randomElement(using: &numberGenerator)!
 ///     }
 /// }
 ///

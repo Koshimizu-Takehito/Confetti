@@ -75,7 +75,7 @@ dependencies: [
 
 ## サンプルプロジェクト
 
-`Example/` ディレクトリに完全なサンプル iOS アプリが含まれています。さまざまな統合パターンを含む Confetti のすべての機能をデモンストレーションしています。
+`Example/` ディレクトリに完全なサンプルアプリが含まれています。iOS と macOS の両方で動作し、さまざまな統合パターンを含む Confetti のすべての機能をデモンストレーションしています。
 
 ### サンプルの実行方法
 
@@ -102,8 +102,8 @@ Xcode でビルドして実行します。
 | **@Observable** | モダンなマクロベースのオブザベーション（iOS 17+） |
 | **ObservableObject** | Combine ベースのオブザベーション |
 | **UIKit/AppKit** | Core Graphics 描画 |
-| **SpriteKit** | GPU アクセラレーション描画 |
-| **Metal** | インスタンス描画による直接 GPU レンダリング |
+| **SpriteKit** | シーングラフベースのスプライトレンダリング |
+| **Metal** | インスタンス描画によるカスタム Metal シェーダー |
 
 #### Basic タブ
 
@@ -269,7 +269,10 @@ struct ContentView: View {
             GeometryReader { geometry in
                 ConfettiCanvas(renderStates: player.renderStates)
                     .onAppear { canvasSize = geometry.size }
-                    .onChange(of: geometry.size) { _, size in canvasSize = size }
+                    .onChange(of: geometry.size) { _, size in
+                        canvasSize = size
+                        player.updateCanvasSize(to: size)
+                    }
             }
 
             HStack {
@@ -297,8 +300,8 @@ struct BrandColorSource: ConfettiColorSource {
         CGColor(red: 0.8, green: 0.2, blue: 0.4, alpha: 1),
     ]
     
-    mutating func nextColor(using rng: inout some RandomNumberGenerator) -> CGColor {
-        colors.randomElement(using: &rng)!
+    mutating func nextColor(using numberGenerator: inout some RandomNumberGenerator) -> CGColor {
+        colors.randomElement(using: &numberGenerator)!
     }
 }
 
@@ -311,7 +314,8 @@ let player = ConfettiPlayer(colorSource: BrandColorSource())
 `ConfettiPlayer` とカスタム `UIView` で Core Graphics 描画を使用:
 
 ```swift
-import ConfettiUI
+import ConfettiPlayback
+import SwiftUI  // Color.cgColor に必要
 import UIKit
 
 class ConfettiView: UIView {
@@ -363,8 +367,9 @@ class ConfettiView: UIView {
 同様に、カスタム `NSView` で Core Graphics 描画を使用:
 
 ```swift
-import ConfettiUI
 import AppKit
+import ConfettiPlayback
+import SwiftUI  // Color.cgColor に必要
 
 class ConfettiView: NSView {
     private let player = ConfettiPlayer()
@@ -426,18 +431,19 @@ ConfettiCore
   - ドメインモデル / 物理シミュレーション / 決定論的 & テスト容易
 ```
 
-`ConfettiCore` は **Core単体でのカスタムレンダリング**を想定し、`ConfettiCloud` などのドメイン型を意図的に公開しています。
-互換性の約束（不変条件・SemVer方針）は `Sources/ConfettiCore/Documentation.docc/Articles/PublicAPIContract.md` を参照してください。
+`ConfettiCore` は**内部モジュール**であり、ライブラリユーザーが直接アクセスすることはできません。
+カスタムレンダリングには `ParticleRenderState` を提供する `ConfettiPlayback` を、SwiftUI ビューには `ConfettiUI` を使用してください。
+`ConfettiConfig` や `ConfettiColorSource` などの主要な型は `ConfettiPlayback` 経由で再エクスポートされています。
 
-### ConfettiCore
+### ConfettiCore（内部）
 
-UI 非依存のドメインモデルと物理シミュレーション:
+UI 非依存のドメインモデルと物理シミュレーション（実装詳細）:
 
 - `ConfettiSimulation`: シミュレーションライフサイクルの状態機械（pause/resume/seek 対応）
 - `ConfettoTraits`: 不変のパーティクル属性（サイズ、色、回転速度）
 - `ConfettoState`: 可変のパーティクル状態（位置、速度、透明度）
 - `ConfettiCloud`: 効率的なコンパクションを備えたパーティクルのコレクション
-- `ConfettiConfig`: プリセット付きのシミュレーション設定
+- `ConfettiConfig`: プリセット付きのシミュレーション設定（ConfettiPlayback 経由で再エクスポート）
 
 ### ConfettiPlayback
 
@@ -449,7 +455,7 @@ UI 非依存のドメインモデルと物理シミュレーション:
 - `ConfettiRenderer`: バッファ再利用でドメイン状態をレンダー状態に変換
 - `ParticleRenderState`: 描画可能なパーティクル表現
 - `DefaultColorSource`: デフォルトの7色紙吹雪パレット
-- `DisplayLinkDriver`: VSync 同期のフレーム更新
+- `DisplayLinkDriver`: フレーム更新（iOS は CADisplayLink、macOS は 120Hz Timer）（内部）
 
 ### ConfettiUI
 

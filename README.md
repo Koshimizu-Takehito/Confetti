@@ -75,7 +75,7 @@ Then add it to your target:
 
 ## Example Project
 
-A complete example iOS app is included in the `Example/` directory. It demonstrates all features of Confetti including different integration patterns.
+A complete example app is included in the `Example/` directory. It demonstrates all features of Confetti including different integration patterns and runs on both iOS and macOS.
 
 ### Running the Example
 
@@ -102,8 +102,8 @@ Demonstrates integration with various rendering technologies:
 | **@Observable** | Modern macro-based observation (iOS 17+) |
 | **ObservableObject** | Combine-based observation |
 | **UIKit/AppKit** | Core Graphics drawing |
-| **SpriteKit** | GPU-accelerated sprite rendering |
-| **Metal** | Direct GPU rendering with instanced drawing |
+| **SpriteKit** | Scene graph based sprite rendering |
+| **Metal** | Custom Metal shaders with instanced drawing |
 
 #### Basic Tab
 
@@ -269,7 +269,10 @@ struct ContentView: View {
             GeometryReader { geometry in
                 ConfettiCanvas(renderStates: player.renderStates)
                     .onAppear { canvasSize = geometry.size }
-                    .onChange(of: geometry.size) { _, size in canvasSize = size }
+                    .onChange(of: geometry.size) { _, size in
+                        canvasSize = size
+                        player.updateCanvasSize(to: size)
+                    }
             }
 
             HStack {
@@ -297,8 +300,8 @@ struct BrandColorSource: ConfettiColorSource {
         CGColor(red: 0.8, green: 0.2, blue: 0.4, alpha: 1),
     ]
     
-    mutating func nextColor(using rng: inout some RandomNumberGenerator) -> CGColor {
-        colors.randomElement(using: &rng)!
+    mutating func nextColor(using numberGenerator: inout some RandomNumberGenerator) -> CGColor {
+        colors.randomElement(using: &numberGenerator)!
     }
 }
 
@@ -311,7 +314,8 @@ let player = ConfettiPlayer(colorSource: BrandColorSource())
 Use `ConfettiPlayer` with Core Graphics drawing in a custom `UIView`:
 
 ```swift
-import ConfettiUI
+import ConfettiPlayback
+import SwiftUI  // Required for Color.cgColor
 import UIKit
 
 class ConfettiView: UIView {
@@ -363,8 +367,9 @@ class ConfettiView: UIView {
 Similarly, use Core Graphics drawing in a custom `NSView`:
 
 ```swift
-import ConfettiUI
 import AppKit
+import ConfettiPlayback
+import SwiftUI  // Required for Color.cgColor
 
 class ConfettiView: NSView {
     private let player = ConfettiPlayer()
@@ -414,21 +419,31 @@ class ConfettiView: NSView {
 Confetti is designed with a clean, testable, three-layer architecture:
 
 ```text
-ConfettiUI          ← Ready-to-use SwiftUI components
+ConfettiUI
   - SwiftUI views / Screens / Trigger components / Design tokens
         │
         ▼
-ConfettiPlayback    ← Flexible playback control for any rendering approach
+ConfettiPlayback
   - Playback control / Frame driving / Render state conversion / Color source
         │
         ▼
-ConfettiCore        ← Internal module (not exposed)
+ConfettiCore
   - Domain models / Physics simulation / Deterministic & testable
 ```
 
-> **Note**: `ConfettiCore` is an internal module and not exposed as a public product.
-> Users should import `ConfettiUI` or `ConfettiPlayback` instead.
-> Essential types like `ConfettiConfig` and `ConfettiColorSource` are re-exported through `ConfettiPlayback`.
+`ConfettiCore` is an **internal module** that is not directly accessible to library users.
+Use `ConfettiPlayback` for custom rendering with `ParticleRenderState`, or `ConfettiUI` for ready-to-use SwiftUI views.
+Key types like `ConfettiConfig` and `ConfettiColorSource` are re-exported through `ConfettiPlayback`.
+
+### ConfettiCore (internal)
+
+UI-independent domain models and physics simulation (implementation details):
+
+- `ConfettiSimulation`: State machine for simulation lifecycle (pause/resume/seek support)
+- `ConfettoTraits`: Immutable particle attributes (size, color, rotation speed)
+- `ConfettoState`: Mutable particle state (position, velocity, opacity)
+- `ConfettiCloud`: Particle collection with efficient compaction
+- `ConfettiConfig`: Simulation configuration with presets (re-exported via ConfettiPlayback)
 
 ### ConfettiPlayback
 
@@ -440,7 +455,7 @@ Playback control and render state management:
 - `ConfettiRenderer`: Converts domain state to render state with buffer reuse
 - `ParticleRenderState`: Ready-to-draw particle representation
 - `DefaultColorSource`: Default 7-color confetti palette
-- `DisplayLinkDriver`: VSync-synchronized frame updates (internal)
+- `DisplayLinkDriver`: Frame updates (CADisplayLink on iOS, 120Hz Timer on macOS) (internal)
 
 ### ConfettiUI
 

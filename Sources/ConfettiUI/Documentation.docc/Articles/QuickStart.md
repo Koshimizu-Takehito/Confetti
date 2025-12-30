@@ -51,8 +51,8 @@ struct BrandColors: ConfettiColorSource {
         CGColor(red: 0.9, green: 0.3, blue: 0.5, alpha: 1),
     ]
     
-    mutating func nextColor(using rng: inout some RandomNumberGenerator) -> CGColor {
-        palette.randomElement(using: &rng)!
+    mutating func nextColor(using numberGenerator: inout some RandomNumberGenerator) -> CGColor {
+        palette.randomElement(using: &numberGenerator)!
     }
 }
 
@@ -82,7 +82,10 @@ struct ContentView: View {
             GeometryReader { geometry in
                 ConfettiCanvas(renderStates: player.renderStates)
                     .onAppear { canvasSize = geometry.size }
-                    .onChange(of: geometry.size) { _, size in canvasSize = size }
+                    .onChange(of: geometry.size) { _, size in
+                        canvasSize = size
+                        player.updateCanvasSize(to: size)
+                    }
             }
 
             HStack {

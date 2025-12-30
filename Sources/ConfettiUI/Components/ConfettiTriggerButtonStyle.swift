@@ -42,7 +42,7 @@ public struct ConfettiTriggerButtonStyle: Sendable {
     /// Shadow Y offset
     public var shadowY: CGFloat
 
-    /// Default gradient colors (coral red to mango orange)
+    /// Default gradient colors (green to mint)
     public static let defaultGradientColors: [Color] = [.green, .mint]
 
     /// Creates a style with the specified parameters.

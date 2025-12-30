@@ -19,7 +19,8 @@ Playback control and rendering for confetti animations.
 - **UIKit/AppKit**: for frame driving (`CADisplayLink` on iOS, `Timer` on macOS)
 - **SwiftUI**: for `Color` in `ParticleRenderState`
 
-If you want a completely UI-framework-independent module, use ``ConfettiCore`` directly.
+> **Note**: `ConfettiCore` is an internal module and is not exposed as a public product.
+> The simulation logic is UI-independent internally, but library users should use `ConfettiPlayback` or `ConfettiUI`.
 
 ## Getting Started
 

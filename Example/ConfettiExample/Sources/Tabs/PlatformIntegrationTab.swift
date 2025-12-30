@@ -9,8 +9,8 @@ import SwiftUI
 ///
 /// - **SwiftUI Integration**: State management patterns (@Observable and ObservableObject)
 /// - **Platform Native**: Core Graphics drawing (UIKit/AppKit)
-/// - **SpriteKit**: GPU-accelerated sprite rendering
-/// - **Metal**: Direct GPU rendering with instanced drawing
+/// - **SpriteKit**: Scene graph based sprite rendering
+/// - **Metal**: Custom Metal shaders with instanced drawing
 struct PlatformIntegrationTab: View {
     var body: some View {
         // swiftlint:disable closure_body_length

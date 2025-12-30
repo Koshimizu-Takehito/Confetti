@@ -5,18 +5,18 @@ import SwiftUI
 
 /// A demonstration view showcasing confetti rendering using Metal.
 ///
-/// This view demonstrates GPU-accelerated particle rendering using Metal,
+/// This view demonstrates custom Metal shader based particle rendering,
 /// providing higher performance compared to Canvas-based rendering.
 ///
 /// ## Overview
 ///
-/// The view uses `MetalConfettiView` to render particles directly
-/// on the GPU using instanced rendering. This demonstrates how to
+/// The view uses `MetalConfettiView` to render particles using
+/// instanced drawing with custom Metal shaders. This demonstrates how to
 /// implement custom Metal-based rendering with `ConfettiPlayer`.
 ///
 /// ## Key Features
 ///
-/// - **GPU-accelerated**: Particles rendered using Metal shaders
+/// - **Metal shaders**: Particles rendered using custom vertex/fragment shaders
 /// - **Instanced rendering**: Efficient batch rendering of all particles
 /// - **Alpha blending**: Smooth transparency effects
 ///

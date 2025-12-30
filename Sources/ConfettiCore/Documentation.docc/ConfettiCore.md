@@ -1,8 +1,12 @@
 # ``ConfettiCore``
 
-A core module that provides UI-independent confetti simulation.
+An internal module that provides UI-independent confetti simulation.
 
-`ConfettiCore` handles **physics simulation** and **domain models** without depending on UI frameworks like SwiftUI. Use `ConfettiUI` for UI components.
+> **Note**: `ConfettiCore` is an **internal module** and is not exposed as a public product.
+> Library users should use `ConfettiPlayback` or `ConfettiUI` instead.
+> Key types like `ConfettiConfig` and `ConfettiColorSource` are re-exported through `ConfettiPlayback`.
+
+`ConfettiCore` handles **physics simulation** and **domain models** without depending on UI frameworks like SwiftUI.
 
 ## Overview
 

@@ -20,7 +20,7 @@ import AppKit
 ///
 /// ## Key Features
 ///
-/// - **GPU-accelerated rendering**: Leverages SpriteKit's optimized sprite batching
+/// - **Optimized rendering**: Leverages SpriteKit's sprite batching
 /// - **Node pooling**: Reuses sprite nodes to minimize allocations
 /// - **Automatic updates**: Observation-based synchronization with ConfettiPlayer
 ///

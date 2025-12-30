@@ -50,7 +50,6 @@ let player = ConfettiPlayer(configuration: .snowfall)
 Inject your own color palette:
 
 ```swift
-import ConfettiCore
 import ConfettiPlayback
 
 struct BrandColors: ConfettiColorSource {
@@ -59,35 +58,48 @@ struct BrandColors: ConfettiColorSource {
         CGColor(red: 0.9, green: 0.3, blue: 0.5, alpha: 1),
     ]
     
-    mutating func nextColor(using rng: inout some RandomNumberGenerator) -> CGColor {
-        palette.randomElement(using: &rng)!
+    mutating func nextColor(using numberGenerator: inout some RandomNumberGenerator) -> CGColor {
+        palette.randomElement(using: &numberGenerator)!
     }
 }
 
 let player = ConfettiPlayer(colorSource: BrandColors())
 ```
 
-## With Metal / SpriteKit
+## With SpriteKit / Metal
+
+For SpriteKit or Metal integration, access `player.renderStates` and convert to your rendering system:
 
 ```swift
 import ConfettiPlayback
+import SpriteKit
 
+// Conceptual example - see Example project for full implementation
 class GameScene: SKScene {
     let player = ConfettiPlayer()
+    private var particleNodes: [SKSpriteNode] = []
     
-    override func update(_ currentTime: TimeInterval) {
-        for state in player.renderStates {
-            // Convert to your rendering system
-            let node = SKShapeNode(rect: state.rect)
-            // Example conversion (platform-specific)
-            node.fillColor = NSColor(state.color)
+    func play() {
+        player.play(canvasSize: size)
+    }
+    
+    func updateParticles() {
+        for (index, state) in player.renderStates.enumerated() {
+            // Node pooling: reuse existing nodes or create new ones
+            let node = getOrCreateNode(at: index)
+            
+            // SpriteKit uses bottom-left origin, so flip Y coordinate
+            node.position = CGPoint(x: state.rect.midX, y: size.height - state.rect.midY)
+            node.size = state.rect.size
             node.alpha = state.opacity
-            node.zRotation = state.zRotation
-            addChild(node)
+            node.zRotation = -state.zRotation  // Negate for SpriteKit
+            // ... set color
         }
     }
 }
 ```
+
+> **Note**: The Example project contains complete implementations for SpriteKit (`ConfettiSKScene`) and Metal (`MetalConfettiCoordinator`) with proper node pooling, observation, and coordinate transformations.
 
 ## SwiftUI Users
 
