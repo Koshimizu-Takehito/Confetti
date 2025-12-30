@@ -28,7 +28,7 @@ struct SpriteKitDemoView: PlatformAgnosticViewControllerRepresentable {
 ///
 /// ## Key Features
 ///
-/// - **SpriteKit rendering**: Uses GPU-accelerated sprite rendering
+/// - **SpriteKit rendering**: Uses scene graph based sprite rendering
 /// - **Scene graph management**: Efficient node pooling and reuse
 /// - **Observation-based updates**: Leverages `@Observable` for automatic scene updates
 /// - **Interface Builder integration**: UI layout configured via XIB

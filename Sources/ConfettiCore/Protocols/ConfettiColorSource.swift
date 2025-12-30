@@ -14,8 +14,8 @@ import CoreGraphics
 ///         CGColor(red: 0, green: 1, blue: 0, alpha: 1),
 ///     ]
 ///
-///     mutating func nextColor(using rng: inout some RandomNumberGenerator) -> CGColor {
-///         colors.randomElement(using: &rng)!
+///     mutating func nextColor(using numberGenerator: inout some RandomNumberGenerator) -> CGColor {
+///         colors.randomElement(using: &numberGenerator)!
 ///     }
 /// }
 /// ```

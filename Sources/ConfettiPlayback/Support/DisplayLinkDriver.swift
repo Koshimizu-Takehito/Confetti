@@ -44,9 +44,10 @@ final class DisplayLinkDriver {
 #elseif canImport(AppKit)
 import Foundation
 
-/// Driver that emits callbacks synchronized with screen refresh.
+/// Driver that emits callbacks for frame updates.
 ///
 /// Uses a high-precision Timer (120Hz) on macOS as `CVDisplayLink` is deprecated.
+/// Note: This is not VSync-synchronized, but provides smooth animation at a fixed rate.
 @MainActor
 final class DisplayLinkDriver {
     // MARK: - Properties

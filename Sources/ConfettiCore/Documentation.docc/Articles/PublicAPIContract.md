@@ -1,32 +1,36 @@
-# Public API Contract
+# Internal API Contract
 
-This document describes the **stability contract** for `ConfettiCore` public types.
+This document describes the **internal API contract** for `ConfettiCore` types.
 
-`ConfettiCore` is designed to be useful on its own (without importing `ConfettiPlayback` / `ConfettiUI`), so several domain types are intentionally **public** for custom renderers.
+> **Note**: `ConfettiCore` is an **internal module** and is not exposed as a public product.
+> Library users should use `ConfettiPlayback` (for `ParticleRenderState` and `ConfettiPlayer`) or `ConfettiUI` (for SwiftUI views).
+> Key types like `ConfettiConfig` and `ConfettiColorSource` are re-exported through `ConfettiPlayback`.
+
+This document is intended for **contributors and maintainers** of the Confetti library.
 
 ## Goals
 
-- Enable **custom rendering** by reading simulation output (e.g. Metal, SpriteKit, custom engines).
+- Maintain **internal API stability** with clear rules for contributors.
 - Keep simulation **deterministic and testable** via injected randomness.
-- Maintain **API stability** with clear rules, even when internal implementation evolves.
+- Document invariants that `ConfettiPlayback` and `ConfettiUI` depend on.
 
 ## Versioning / Compatibility (SemVer)
 
-`ConfettiCore` follows Semantic Versioning:
+The Confetti library follows Semantic Versioning:
 
 - **Patch** releases: bug fixes only (no API contract changes).
 - **Minor** releases: additive changes only (new APIs, new presets, new docs).
 - **Major** releases: breaking changes to the public API contract.
 
-## What is considered “stable” in the Domain API
+## Internal Domain Types
 
-The following types are **public by design**:
+The following types are **internal to ConfettiCore** but have stable contracts that `ConfettiPlayback` depends on:
 
 - ``ConfettiCloud``
 - ``ConfettoTraits``
 - ``ConfettoState``
 
-They form the *read model* that custom renderers can consume.
+They form the *read model* that `ConfettiRenderer` consumes to produce `ParticleRenderState`.
 
 ### Stable invariants (guaranteed)
 
@@ -62,16 +66,18 @@ To keep room for performance and feature evolution, the following are **not** pa
   - With the same configuration, same seed, and same version, results are deterministic.
 - The exact physics tuning constants unless explicitly documented as part of `ConfettiConfig`.
 
-## Mutation rules (how to use safely)
+## Mutation rules
 
-- Custom renderers should treat `ConfettiCloud` as **read-only** output of the simulation.
+- `ConfettiRenderer` treats `ConfettiCloud` as **read-only** output of the simulation.
 - Do not mutate `cloud.states` unless you fully own the simulation loop and accept undefined behavior.
 - The `DEBUG`-only API `withCloudForTesting` exists **for tests** and is not meant for production rendering logic.
 
-## Where to put customization
+## Customization points (for library users)
 
-- **Physics / behavior**: Customize ``ConfettiConfig`` (or add presets).
+Library users can customize behavior through types re-exported by `ConfettiPlayback`:
+
+- **Physics / behavior**: Customize ``ConfettiConfig`` (or use presets).
 - **Colors**: Provide a custom ``ConfettiColorSource`` that outputs `CGColor`.
-- **Rendering**: Read `ConfettiCloud` (Core-only), or use `ConfettiPlayback`’s `ParticleRenderState` if you prefer a ready-to-draw representation.
+- **Rendering**: Use `ConfettiPlayback`'s `ParticleRenderState` for custom Canvas/Core Graphics rendering.
 
 

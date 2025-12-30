@@ -87,8 +87,8 @@ private struct BrandColorSource: ConfettiColorSource {
         CGColor(red: 0.2, green: 0.8, blue: 0.6, alpha: 1), // Brand Teal
     ]
 
-    mutating func nextColor(using rng: inout some RandomNumberGenerator) -> CGColor {
-        colors.randomElement(using: &rng) ?? colors[0]
+    mutating func nextColor(using numberGenerator: inout some RandomNumberGenerator) -> CGColor {
+        colors.randomElement(using: &numberGenerator) ?? colors[0]
     }
 }
 
@@ -104,8 +104,8 @@ private struct PastelColorSource: ConfettiColorSource {
         CGColor(red: 0.9, green: 0.85, blue: 1.0, alpha: 1), // Lavender
     ]
 
-    mutating func nextColor(using rng: inout some RandomNumberGenerator) -> CGColor {
-        colors.randomElement(using: &rng) ?? colors[0]
+    mutating func nextColor(using numberGenerator: inout some RandomNumberGenerator) -> CGColor {
+        colors.randomElement(using: &numberGenerator) ?? colors[0]
     }
 }
 
@@ -121,8 +121,8 @@ private struct NeonColorSource: ConfettiColorSource {
         CGColor(red: 1.0, green: 0.5, blue: 0.0, alpha: 1), // Neon Orange
     ]
 
-    mutating func nextColor(using rng: inout some RandomNumberGenerator) -> CGColor {
-        colors.randomElement(using: &rng) ?? colors[0]
+    mutating func nextColor(using numberGenerator: inout some RandomNumberGenerator) -> CGColor {
+        colors.randomElement(using: &numberGenerator) ?? colors[0]
     }
 }
 
@@ -138,8 +138,8 @@ private struct MonochromeColorSource: ConfettiColorSource {
         CGColor(gray: 1.0, alpha: 1),
     ]
 
-    mutating func nextColor(using rng: inout some RandomNumberGenerator) -> CGColor {
-        colors.randomElement(using: &rng) ?? colors[0]
+    mutating func nextColor(using numberGenerator: inout some RandomNumberGenerator) -> CGColor {
+        colors.randomElement(using: &numberGenerator) ?? colors[0]
     }
 }
 

@@ -7,7 +7,7 @@ import SwiftUI
 /// A SwiftUI view that renders confetti particles using Metal.
 ///
 /// This view wraps an `MTKView` and uses the `MetalConfettiCoordinator`
-/// to render particles with GPU acceleration.
+/// to render particles using custom Metal shaders.
 ///
 /// ## Example
 ///
