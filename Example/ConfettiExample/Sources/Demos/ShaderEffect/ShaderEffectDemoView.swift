@@ -45,7 +45,7 @@ struct ShaderEffectDemoView: View {
                 DemoTriggerButton(.cyan, .blue) {
                     viewModel.fire()
                 }
-                .padding(EdgeInsets(top: 0, leading: 0, bottom: 50, trailing: 0))
+                .padding(.bottom)
             }
             .onGeometryChange(for: CGSize.self, of: \.size) { _, size in
                 viewModel.canvasSize = size
