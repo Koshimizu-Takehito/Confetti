@@ -133,14 +133,11 @@ private struct AdvancedPlaybackDemo: View {
     var body: some View {
         VStack(spacing: 0) {
             // Confetti canvas
-            GeometryReader { geometry in
-                ConfettiCanvas(renderStates: player.renderStates)
-                    .onAppear { canvasSize = geometry.size }
-                    .onChange(of: geometry.size) { _, size in
-                        canvasSize = size
-                        player.updateCanvasSize(to: size)
-                    }
-            }
+            ConfettiCanvas(renderStates: player.renderStates)
+                .onGeometryChange(for: CGSize.self, of: \.size) { _, size in
+                    canvasSize = size
+                    player.updateCanvasSize(to: size)
+                }
 
             Divider()
             playbackInfo

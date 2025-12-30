@@ -37,6 +37,10 @@ public struct ConfettiPlayerScreen: View {
 
     @Bindable private var player: ConfettiPlayer
 
+    // MARK: - Private State
+
+    @State private var canvasSize: CGSize = .zero
+
     // MARK: - Environment
 
     @Environment(\.confettiDesignTokens) private var tokens
@@ -52,18 +56,17 @@ public struct ConfettiPlayerScreen: View {
     // MARK: - Body
 
     public var body: some View {
-        GeometryReader { geometry in
-            ConfettiCanvas(renderStates: player.renderStates)
-                .background(content: backgroundGradient)
-                .overlay(alignment: .bottom) {
-                    PlaybackControls(player: player, canvasSize: geometry.size)
-                        .padding(.bottom, tokens.spacing.extraLarge)
-                        .padding(.horizontal, tokens.spacing.medium)
-                }
-                .onChange(of: geometry.size) { _, newSize in
-                    player.updateCanvasSize(to: newSize)
-                }
-        }
+        ConfettiCanvas(renderStates: player.renderStates)
+            .background(content: backgroundGradient)
+            .overlay(alignment: .bottom) {
+                PlaybackControls(player: player, canvasSize: canvasSize)
+                    .padding(.bottom, tokens.spacing.extraLarge)
+                    .padding(.horizontal, tokens.spacing.medium)
+            }
+            .onGeometryChange(for: CGSize.self, of: \.size) { _, newSize in
+                canvasSize = newSize
+                player.updateCanvasSize(to: newSize)
+            }
     }
 
     // MARK: - Private Views

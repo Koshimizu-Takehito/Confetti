@@ -165,23 +165,25 @@ struct PlaybackControls: View {
 
 private struct PlaybackControlsPreview: View {
     @State private var player = ConfettiPlayer()
+    @State private var canvasSize: CGSize = .zero
 
     var body: some View {
-        GeometryReader { geometry in
-            ZStack {
-                LinearGradient(
-                    colors: [.purple, .blue],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                .ignoresSafeArea()
+        ZStack {
+            LinearGradient(
+                colors: [.purple, .blue],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .ignoresSafeArea()
 
-                VStack {
-                    Spacer()
-                    PlaybackControls(player: player, canvasSize: geometry.size)
-                }
-                .padding()
+            VStack {
+                Spacer()
+                PlaybackControls(player: player, canvasSize: canvasSize)
             }
+            .padding()
+        }
+        .onGeometryChange(for: CGSize.self, of: \.size) { _, size in
+            canvasSize = size
         }
     }
 }

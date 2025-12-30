@@ -257,7 +257,7 @@ struct ContentView: View {
 
 ### Advanced Playback Control
 
-For external control, use `ConfettiCanvas` directly with `GeometryReader`:
+For external control, use `ConfettiCanvas` directly with `onGeometryChange`:
 
 ```swift
 import SwiftUI
@@ -269,14 +269,11 @@ struct ContentView: View {
 
     var body: some View {
         VStack {
-            GeometryReader { geometry in
-                ConfettiCanvas(renderStates: player.renderStates)
-                    .onAppear { canvasSize = geometry.size }
-                    .onChange(of: geometry.size) { _, size in
-                        canvasSize = size
-                        player.updateCanvasSize(to: size)
-                    }
-            }
+            ConfettiCanvas(renderStates: player.renderStates)
+                .onGeometryChange(for: CGSize.self, of: \.size) { _, size in
+                    canvasSize = size
+                    player.updateCanvasSize(to: size)
+                }
 
             HStack {
                 Button("Play") { player.play(canvasSize: canvasSize) }

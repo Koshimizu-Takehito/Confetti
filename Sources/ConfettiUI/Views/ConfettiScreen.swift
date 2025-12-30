@@ -45,17 +45,14 @@ import SwiftUI
 /// @State var player = ConfettiPlayer()
 /// @State var canvasSize: CGSize = .zero
 ///
-/// GeometryReader { geometry in
-///     ConfettiCanvas(renderStates: player.renderStates)
-///         .onAppear {
-///             canvasSize = geometry.size
-///             player.play(canvasSize: geometry.size)
-///         }
-///         .onChange(of: geometry.size) { _, size in
-///             canvasSize = size
-///             player.updateCanvasSize(to: size)
-///         }
-/// }
+/// ConfettiCanvas(renderStates: player.renderStates)
+///     .onGeometryChange(for: CGSize.self, of: \.size) { _, size in
+///         canvasSize = size
+///         player.updateCanvasSize(to: size)
+///     }
+///     .onTapGesture {
+///         player.play(canvasSize: canvasSize)
+///     }
 /// ```
 public struct ConfettiScreen<Trigger: View>: View {
     // MARK: - Properties
