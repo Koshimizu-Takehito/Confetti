@@ -38,18 +38,16 @@ import Foundation
 /// @StateObject private var viewModel = ObservableObjectDemoViewModel()
 ///
 /// var body: some View {
-///     GeometryReader { geometry in
-///         Canvas { context, _ in
-///             for state in viewModel.renderStates {
-///                 // Render particles...
-///             }
+///     Canvas { context, _ in
+///         for state in viewModel.renderStates {
+///             // Render particles...
 ///         }
-///         .onTapGesture {
-///             viewModel.fire()
-///         }
-///         .onChange(of: geometry.size) { _, size in
-///             viewModel.canvasSize = size
-///         }
+///     }
+///     .onGeometryChange(for: CGSize.self, of: \.size) { _, size in
+///         viewModel.canvasSize = size
+///     }
+///     .onTapGesture {
+///         viewModel.fire()
 ///     }
 /// }
 /// ```

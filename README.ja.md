@@ -257,7 +257,7 @@ struct ContentView: View {
 
 ### 高度な再生制御
 
-外部制御の場合は、`ConfettiCanvas` を `GeometryReader` と組み合わせて直接使用します:
+外部制御の場合は、`ConfettiCanvas` を `onGeometryChange` と組み合わせて直接使用します:
 
 ```swift
 import SwiftUI
@@ -269,14 +269,11 @@ struct ContentView: View {
 
     var body: some View {
         VStack {
-            GeometryReader { geometry in
-                ConfettiCanvas(renderStates: player.renderStates)
-                    .onAppear { canvasSize = geometry.size }
-                    .onChange(of: geometry.size) { _, size in
-                        canvasSize = size
-                        player.updateCanvasSize(to: size)
-                    }
-            }
+            ConfettiCanvas(renderStates: player.renderStates)
+                .onGeometryChange(for: CGSize.self, of: \.size) { _, size in
+                    canvasSize = size
+                    player.updateCanvasSize(to: size)
+                }
 
             HStack {
                 Button("再生") { player.play(canvasSize: canvasSize) }
