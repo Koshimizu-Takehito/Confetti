@@ -4,6 +4,10 @@ import Observation
 
 // MARK: - ConfettiSimulation
 
+// swiftlint:disable type_body_length
+// Justification: Core physics simulation class with 10 focused helper methods (304 lines).
+// Already refactored in commit 78ab1fe. Further splitting would create unnecessary abstraction.
+
 /// State machine for confetti simulation.
 ///
 /// Handles particle creation, updates, and termination. UI-independent.
@@ -505,3 +509,4 @@ import Observation
         }
     }
 }
+// swiftlint:enable type_body_length

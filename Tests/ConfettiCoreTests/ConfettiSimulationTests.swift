@@ -3,6 +3,10 @@ import CoreGraphics
 import Foundation
 import Testing
 
+// swiftlint:disable file_length
+// Justification: Comprehensive test coverage with 63 tests.
+// Tests are well-organized with MARK comments for each category.
+
 // MARK: - TestColors
 
 /// Test color palette
@@ -961,11 +965,9 @@ struct OutOfBoundsTestCase: Sendable {
     let positions2 = states2.map(\.rect.midY)
 
     var positionsChanged = false
-    for (pos1, pos2) in zip(positions1, positions2) {
-        if abs(pos1 - pos2) > 0.01 {
-            positionsChanged = true
-            break
-        }
+    for (pos1, pos2) in zip(positions1, positions2) where abs(pos1 - pos2) > 0.01 {
+        positionsChanged = true
+        break
     }
 
     #expect(positionsChanged, "update 後は位置が変わるべき")
@@ -1028,11 +1030,9 @@ struct OutOfBoundsTestCase: Sendable {
 
     // 位置が変わっていることを確認（キャッシュが無効化されて再計算された証拠）
     var positionsChanged = false
-    for (before, after) in zip(statesBefore, statesAfter) {
-        if abs(before.rect.midY - after.rect.midY) > 0.01 {
-            positionsChanged = true
-            break
-        }
+    for (before, after) in zip(statesBefore, statesAfter) where abs(before.rect.midY - after.rect.midY) > 0.01 {
+        positionsChanged = true
+        break
     }
 
     #expect(positionsChanged, "update 後は renderStates が更新されるべき")
@@ -1064,11 +1064,9 @@ struct OutOfBoundsTestCase: Sendable {
 
     // 位置が変わっていることを確認
     var positionsChanged = false
-    for (before, after) in zip(positionsBefore, positionsAfter) {
-        if abs(before - after) > 0.01 {
-            positionsChanged = true
-            break
-        }
+    for (before, after) in zip(positionsBefore, positionsAfter) where abs(before - after) > 0.01 {
+        positionsChanged = true
+        break
     }
 
     #expect(positionsChanged, "seek 後は renderStates が更新されるべき")
@@ -1200,3 +1198,4 @@ struct OutOfBoundsTestCase: Sendable {
     // しかし、version は異なる（キャッシュは無効化されている）
     // この動作は意図的：seek は常に cloud を再構築するため
 }
+// swiftlint:enable file_length
