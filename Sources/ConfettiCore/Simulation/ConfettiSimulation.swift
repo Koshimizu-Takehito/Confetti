@@ -61,16 +61,33 @@ import Observation
     public private(set) var state: State
     @ObservationIgnored private let renderer: ConfettiRenderer
 
+    // MARK: - Render States Cache
+
+    /// Cached render states (invalidated when cloud version changes)
+    @ObservationIgnored private var cachedRenderStates: [ParticleRenderState] = []
+
+    /// Last cloud version used for caching
+    @ObservationIgnored private var lastCloudVersion: Int = -1
+
     /// Total duration of the simulation
     public var duration: TimeInterval { configuration.lifecycle.duration }
 
     /// Current simulation time
     public var currentTime: TimeInterval { state.simulationTime }
 
-    /// Render states for Canvas drawing (computed from current cloud state)
+    /// Render states for Canvas drawing (cached, recomputed only when cloud changes)
     public var renderStates: [ParticleRenderState] {
         guard let cloud = state.cloud else { return [] }
-        return renderer.update(from: cloud)
+
+        // Return cached result if cloud hasn't changed
+        if cloud.version == lastCloudVersion {
+            return cachedRenderStates
+        }
+
+        // Recompute and cache
+        cachedRenderStates = renderer.update(from: cloud)
+        lastCloudVersion = cloud.version
+        return cachedRenderStates
     }
 
     // MARK: - Initialization
@@ -117,6 +134,8 @@ import Observation
     public func stop() {
         state = .init()
         renderer.clear()
+        cachedRenderStates = []
+        lastCloudVersion = -1
     }
 
     /// Pauses the simulation.
@@ -148,7 +167,9 @@ import Observation
         let targetTime = max(0, min(time, configuration.lifecycle.duration))
 
         // Reset to initial state
-        state.cloud = initialCloud
+        var cloud = initialCloud
+        cloud.incrementVersion()
+        state.cloud = cloud
         state.simulationTime = 0
         state.accumulatedTime = 0
 
@@ -227,9 +248,12 @@ import Observation
 
     #if DEBUG
     /// For testing: Directly manipulate the Cloud.
+    ///
+    /// - Important: This method increments the cloud version to invalidate render state cache.
     package func withCloudForTesting(_ body: (inout ConfettiCloud) -> Void) {
         guard var cloud = state.cloud else { return }
         body(&cloud)
+        cloud.incrementVersion()
         state.cloud = cloud
     }
     #endif
@@ -343,6 +367,7 @@ import Observation
         }
 
         cloud.compact()
+        cloud.incrementVersion()
         state.cloud = cloud
     }
 

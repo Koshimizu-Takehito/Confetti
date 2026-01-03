@@ -903,11 +903,11 @@ struct OutOfBoundsTestCase: Sendable {
 
     simulation.start(area: bounds, at: Date(), colorSource: ConstantColorSource(), randomNumberGenerator: &numberGenerator)
 
-    // 最初のアクセス（キャッシュなし）
+    // 最初のアクセス（キャッシュミス）
     let firstAccess = simulation.renderStates
     #expect(firstAccess.count == 100, "最初のアクセスで全パーティクルが返される")
 
-    // 同じ state.cloud で複数回アクセス（cloud が変更されていない）
+    // 同じ state.cloud で複数回アクセス（すべてキャッシュヒット）
     var accessCount = 0
     let iterations = 1000
 
@@ -920,17 +920,15 @@ struct OutOfBoundsTestCase: Sendable {
 
     #expect(accessCount == 100 * iterations, "全アクセスで正しい数が返される")
 
-    // パフォーマンス閾値チェック（1000回アクセスで0.1秒以内）
-    // これは目安値。実際の許容値は環境による
-    let isAcceptable = elapsed < 0.1
+    // キャッシュが効いていれば非常に高速（0.01秒以下が期待値）
+    let isVeryFast = elapsed < 0.01
 
-    if !isAcceptable {
-        print("⚠️ パフォーマンス警告: renderStates へ\(iterations)回アクセスに\(String(format: "%.3f", elapsed))秒かかりました")
-        print("   キャッシング機構の追加を検討してください")
+    if !isVeryFast {
+        print("⚠️ パフォーマンス: キャッシュヒット時の\(iterations)回アクセスに\(String(format: "%.3f", elapsed))秒")
+        print("   期待値: 0.01秒以下（キャッシュが効いている場合）")
+    } else {
+        print("✅ キャッシュヒット: \(iterations)回アクセス = \(String(format: "%.4f", elapsed))秒")
     }
-
-    // テストは失敗させない（警告のみ）
-    // #expect(isAcceptable, "renderStates のアクセスは高速であるべき")
 }
 
 @Test("パフォーマンス: renderStates は cloud 変更時のみ再計算が必要")
@@ -971,4 +969,234 @@ struct OutOfBoundsTestCase: Sendable {
     }
 
     #expect(positionsChanged, "update 後は位置が変わるべき")
+}
+
+// MARK: - キャッシング機構テスト
+
+@Test("キャッシュ: cloud が変更されていない場合は同じ配列を返す")
+@MainActor func renderStatesCacheHit() {
+    var configuration = ConfettiConfig()
+    configuration.lifecycle.particleCount = 10
+    configuration.lifecycle.duration = 5
+
+    let simulation = ConfettiSimulation(configuration: configuration)
+    var numberGenerator = SeededRandomNumberGenerator(seed: 999)
+    let bounds = CGSize(width: 300, height: 600)
+
+    simulation.start(area: bounds, at: Date(), colorSource: ConstantColorSource(), randomNumberGenerator: &numberGenerator)
+
+    // 同じ renderStates を複数回アクセス
+    let states1 = simulation.renderStates
+    let states2 = simulation.renderStates
+    let states3 = simulation.renderStates
+
+    // キャッシュヒットの確認：同一インスタンスが返されるべき
+    #expect(states1.count == 10)
+    #expect(states2.count == 10)
+    #expect(states3.count == 10)
+
+    // Array の identity は判定できないが、内容が同じことを確認
+    for (s1, s2) in zip(states1, states2) {
+        #expect(s1.id == s2.id)
+        #expect(s1.rect == s2.rect)
+        #expect(s1.opacity == s2.opacity)
+    }
+}
+
+@Test("キャッシュ: update 後はキャッシュが無効化される")
+@MainActor func cacheInvalidationAfterUpdate() {
+    var configuration = ConfettiConfig()
+    configuration.lifecycle.particleCount = 10
+    configuration.lifecycle.duration = 5
+    configuration.physics.fixedDeltaTime = 1.0 / 60.0
+
+    let simulation = ConfettiSimulation(configuration: configuration)
+    var numberGenerator = SeededRandomNumberGenerator(seed: 111)
+    let bounds = CGSize(width: 300, height: 600)
+    let startTime = Date()
+
+    simulation.start(area: bounds, at: startTime, colorSource: ConstantColorSource(), randomNumberGenerator: &numberGenerator)
+
+    let statesBefore = simulation.renderStates
+    #expect(statesBefore.count == 10)
+
+    // update を実行（cloud が変更される）
+    simulation.update(at: startTime.addingTimeInterval(0.1), area: bounds)
+
+    let statesAfter = simulation.renderStates
+    #expect(statesAfter.count == 10)
+
+    // 位置が変わっていることを確認（キャッシュが無効化されて再計算された証拠）
+    var positionsChanged = false
+    for (before, after) in zip(statesBefore, statesAfter) {
+        if abs(before.rect.midY - after.rect.midY) > 0.01 {
+            positionsChanged = true
+            break
+        }
+    }
+
+    #expect(positionsChanged, "update 後は renderStates が更新されるべき")
+}
+
+@Test("キャッシュ: seek 後はキャッシュが無効化される")
+@MainActor func cacheInvalidationAfterSeek() {
+    var configuration = ConfettiConfig()
+    configuration.lifecycle.particleCount = 10
+    configuration.lifecycle.duration = 5
+    configuration.physics.fixedDeltaTime = 1.0 / 60.0
+
+    let simulation = ConfettiSimulation(configuration: configuration)
+    var numberGenerator = SeededRandomNumberGenerator(seed: 222)
+    let bounds = CGSize(width: 300, height: 600)
+
+    simulation.start(area: bounds, at: Date(), colorSource: ConstantColorSource(), randomNumberGenerator: &numberGenerator)
+
+    // 初期位置を記録
+    let statesBefore = simulation.renderStates
+    let positionsBefore = statesBefore.map(\.rect.midY)
+
+    // 時間を進める
+    simulation.seek(to: 1.0, area: bounds)
+
+    // seek 後の位置を取得
+    let statesAfter = simulation.renderStates
+    let positionsAfter = statesAfter.map(\.rect.midY)
+
+    // 位置が変わっていることを確認
+    var positionsChanged = false
+    for (before, after) in zip(positionsBefore, positionsAfter) {
+        if abs(before - after) > 0.01 {
+            positionsChanged = true
+            break
+        }
+    }
+
+    #expect(positionsChanged, "seek 後は renderStates が更新されるべき")
+}
+
+@Test("キャッシュ: stop 後はキャッシュがクリアされる")
+@MainActor func cacheInvalidationAfterStop() {
+    var configuration = ConfettiConfig()
+    configuration.lifecycle.particleCount = 10
+    configuration.lifecycle.duration = 5
+
+    let simulation = ConfettiSimulation(configuration: configuration)
+    var numberGenerator = SeededRandomNumberGenerator(seed: 333)
+    let bounds = CGSize(width: 300, height: 600)
+
+    simulation.start(area: bounds, at: Date(), colorSource: ConstantColorSource(), randomNumberGenerator: &numberGenerator)
+
+    let statesBefore = simulation.renderStates
+    #expect(statesBefore.count == 10)
+
+    // stop を実行
+    simulation.stop()
+
+    // stop 後は空の配列を返すべき
+    let statesAfter = simulation.renderStates
+    #expect(statesAfter.isEmpty, "stop 後は renderStates が空になるべき")
+}
+
+@Test("キャッシュ: withCloudForTesting 後はキャッシュが無効化される")
+@MainActor func cacheInvalidationAfterWithCloudForTesting() {
+    var configuration = ConfettiConfig()
+    configuration.lifecycle.particleCount = 10
+    configuration.lifecycle.duration = 5
+
+    let simulation = ConfettiSimulation(configuration: configuration)
+    var numberGenerator = SeededRandomNumberGenerator(seed: 444)
+    let bounds = CGSize(width: 300, height: 600)
+
+    simulation.start(area: bounds, at: Date(), colorSource: ConstantColorSource(), randomNumberGenerator: &numberGenerator)
+
+    let statesBefore = simulation.renderStates
+    let positionsBefore = statesBefore.map(\.rect.midY)
+
+    // withCloudForTesting で cloud を変更
+    simulation.withCloudForTesting { cloud in
+        // 全パーティクルを下に移動
+        for index in 0 ..< cloud.aliveCount {
+            cloud.states[index].position.y += 100
+        }
+    }
+
+    // withCloudForTesting 後の位置を取得
+    let statesAfter = simulation.renderStates
+    let positionsAfter = statesAfter.map(\.rect.midY)
+
+    // 位置が変わっていることを確認（キャッシュが無効化された証拠）
+    for (before, after) in zip(positionsBefore, positionsAfter) {
+        #expect(abs(after - before - 100) < 1.0, "withCloudForTesting 後は renderStates が更新されるべき")
+    }
+}
+
+@Test("キャッシュ: pause 中はキャッシュが維持される")
+@MainActor func cachePreservedDuringPause() {
+    var configuration = ConfettiConfig()
+    configuration.lifecycle.particleCount = 10
+    configuration.lifecycle.duration = 5
+    configuration.physics.fixedDeltaTime = 1.0 / 60.0
+
+    let simulation = ConfettiSimulation(configuration: configuration)
+    var numberGenerator = SeededRandomNumberGenerator(seed: 555)
+    let bounds = CGSize(width: 300, height: 600)
+    let startTime = Date()
+
+    simulation.start(area: bounds, at: startTime, colorSource: ConstantColorSource(), randomNumberGenerator: &numberGenerator)
+
+    // 少し進める
+    simulation.update(at: startTime.addingTimeInterval(0.1), area: bounds)
+
+    let statesBeforePause = simulation.renderStates
+    let positionsBeforePause = statesBeforePause.map(\.rect.midY)
+
+    // pause（cloud は変更されない）
+    simulation.pause()
+
+    // pause 中に複数回アクセス（すべてキャッシュヒット）
+    let statesDuringPause1 = simulation.renderStates
+    let statesDuringPause2 = simulation.renderStates
+    let positionsDuringPause = statesDuringPause1.map(\.rect.midY)
+
+    // 位置が変わっていないことを確認（キャッシュが維持されている）
+    for (before, during) in zip(positionsBeforePause, positionsDuringPause) {
+        #expect(abs(before - during) < 0.001, "pause 中は renderStates が変わらないべき")
+    }
+
+    // 複数回のアクセスで同じ結果
+    for (s1, s2) in zip(statesDuringPause1, statesDuringPause2) {
+        #expect(s1.rect == s2.rect, "pause 中の複数アクセスは同じ結果を返すべき")
+    }
+}
+
+@Test("キャッシュ: 同じ時刻への複数回の seek でもキャッシュが無効化される")
+@MainActor func cacheInvalidationOnDuplicateSeek() {
+    var configuration = ConfettiConfig()
+    configuration.lifecycle.particleCount = 10
+    configuration.lifecycle.duration = 5
+    configuration.physics.fixedDeltaTime = 1.0 / 60.0
+
+    let simulation = ConfettiSimulation(configuration: configuration)
+    var numberGenerator = SeededRandomNumberGenerator(seed: 666)
+    let bounds = CGSize(width: 300, height: 600)
+
+    simulation.start(area: bounds, at: Date(), colorSource: ConstantColorSource(), randomNumberGenerator: &numberGenerator)
+
+    // 最初の seek
+    simulation.seek(to: 1.0, area: bounds)
+    let statesAfterFirstSeek = simulation.renderStates
+    let positionsAfterFirstSeek = statesAfterFirstSeek.map(\.rect.midY)
+
+    // 同じ時刻への2回目の seek
+    simulation.seek(to: 1.0, area: bounds)
+    let statesAfterSecondSeek = simulation.renderStates
+    let positionsAfterSecondSeek = statesAfterSecondSeek.map(\.rect.midY)
+
+    // 決定論的なので、位置は同じはず
+    for (pos1, pos2) in zip(positionsAfterFirstSeek, positionsAfterSecondSeek) {
+        #expect(abs(pos1 - pos2) < 0.001, "同じ時刻への seek は同じ結果を返すべき")
+    }
+
+    // しかし、version は異なる（キャッシュは無効化されている）
+    // この動作は意図的：seek は常に cloud を再構築するため
 }

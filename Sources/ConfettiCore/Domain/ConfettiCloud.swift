@@ -27,6 +27,12 @@ public struct ConfettiCloud: Sendable {
     /// `traits[0..<aliveCount]` and `states[0..<aliveCount]` are valid.
     public var aliveCount: Int
 
+    /// Version counter for cache invalidation.
+    ///
+    /// This counter is incremented whenever the cloud state is mutated,
+    /// enabling efficient cache invalidation in consumers (e.g., `ConfettiSimulation.renderStates`).
+    public private(set) var version: Int = 0
+
     // MARK: - Computed
 
     /// Whether there are no particles remaining
@@ -48,6 +54,16 @@ public struct ConfettiCloud: Sendable {
         self.traits = traits
         self.states = states
         self.aliveCount = aliveCount
+        self.version = 0
+    }
+
+    // MARK: - Mutation Tracking
+
+    /// Increments the version counter.
+    ///
+    /// This should be called after any mutation to the cloud state to invalidate caches.
+    public mutating func incrementVersion() {
+        version += 1
     }
 
     // MARK: - Compaction
