@@ -81,7 +81,7 @@ import Observation
     /// - Parameter canvasSize: Size of the drawing area
     public func play(canvasSize size: CGSize) {
         canvasSize = size
-        simulation.start(bounds: size, at: .now, colorSource: colorSource, using: &numberGenerator)
+        simulation.start(area: size, at: .now, colorSource: colorSource, randomNumberGenerator: &numberGenerator)
         syncState()
         startDisplayLink()
     }
@@ -106,7 +106,7 @@ import Observation
     /// Seeks to a specific time.
     /// - Parameter time: Target time (clamped to 0...duration)
     public func seek(to time: TimeInterval) {
-        simulation.seek(to: time, bounds: canvasSize)
+        simulation.seek(to: time, area: canvasSize)
         syncState()
     }
 
@@ -137,7 +137,7 @@ import Observation
             syncState()
             return
         }
-        simulation.tick(at: date, bounds: canvasSize)
+        simulation.update(at: date, area: canvasSize)
         syncState()
     }
 
@@ -146,8 +146,7 @@ import Observation
         isPaused = simulation.state.isPaused
         currentTime = simulation.currentTime
         if let cloud = simulation.state.cloud {
-            renderer.update(from: cloud)
-            renderStates = renderer.renderStates
+            renderStates = renderer.update(from: cloud)
         } else {
             renderer.clear()
             renderStates = []

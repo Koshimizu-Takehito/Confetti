@@ -15,8 +15,7 @@ import SwiftUI
 ///
 /// ```swift
 /// var renderer = ConfettiRenderer()
-/// renderer.update(from: cloud)
-/// let states = renderer.renderStates // No allocation if count hasn't increased
+/// let states = renderer.update(from: cloud) // Reuses internal buffer
 /// ```
 public struct ConfettiRenderer: Sendable {
     // MARK: - Buffer
@@ -26,11 +25,6 @@ public struct ConfettiRenderer: Sendable {
 
     /// Number of active render states in the buffer
     public private(set) var activeCount: Int = 0
-
-    /// Current render states (view into the active portion of the buffer)
-    public var renderStates: [ParticleRenderState] {
-        Array(buffer.prefix(activeCount))
-    }
 
     // MARK: - Initializer
 
@@ -48,7 +42,8 @@ public struct ConfettiRenderer: Sendable {
     /// The buffer grows if needed but never shrinks automatically.
     ///
     /// - Parameter cloud: Source ConfettiCloud
-    public mutating func update(from cloud: ConfettiCloud) {
+    /// - Returns: Array of render states
+    public mutating func update(from cloud: ConfettiCloud) -> [ParticleRenderState] {
         let count = cloud.aliveCount
         activeCount = count
 
@@ -61,6 +56,8 @@ public struct ConfettiRenderer: Sendable {
             let state = cloud.states[index]
             updateRenderState(at: index, traits: traits, state: state)
         }
+
+        return Array(buffer.prefix(activeCount))
     }
 
     /// Clears all render states.
@@ -125,7 +122,6 @@ public extension ConfettiRenderer {
     /// - Returns: Array of render states
     static func renderStates(from cloud: ConfettiCloud) -> [ParticleRenderState] {
         var renderer = ConfettiRenderer(initialCapacity: cloud.aliveCount)
-        renderer.update(from: cloud)
-        return renderer.renderStates
+        return renderer.update(from: cloud)
     }
 }

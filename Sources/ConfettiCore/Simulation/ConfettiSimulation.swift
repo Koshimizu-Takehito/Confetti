@@ -33,7 +33,7 @@ public struct ConfettiSimulation: Sendable {
     /// Simulation state
     public struct State: Sendable {
         public var startTime: Date?
-        public var lastTickTime: Date?
+        public var lastUpdateTime: Date?
         public var cloud: ConfettiCloud?
         /// Initial cloud state for seek operations
         public var initialCloud: ConfettiCloud?
@@ -79,23 +79,23 @@ public struct ConfettiSimulation: Sendable {
 
     /// Starts the simulation and generates particles.
     /// - Parameters:
-    ///   - bounds: Size of the simulation area
-    ///   - at: Start time
+    ///   - area: Size of the simulation area
+    ///   - startTime: Start time
     ///   - colorSource: Color source
-    ///   - numberGenerator: Number generator
+    ///   - randomNumberGenerator: Random number generator
     public mutating func start(
-        bounds: CGSize,
-        at date: Date,
+        area bounds: CGSize,
+        at startTime: Date,
         colorSource: some ConfettiColorSource,
-        using numberGenerator: inout some RandomNumberGenerator
+        randomNumberGenerator numberGenerator: inout some RandomNumberGenerator
     ) {
         let origin = CGPoint(
             x: bounds.width / 2,
             y: bounds.height * configuration.spawn.originHeightRatio
         )
         let cloud = makeCloud(origin: origin, colorSource: colorSource, using: &numberGenerator)
-        state.startTime = date
-        state.lastTickTime = date
+        state.startTime = startTime
+        state.lastUpdateTime = startTime
         state.simulationTime = 0
         state.accumulatedTime = 0
         state.isPaused = false
@@ -117,11 +117,11 @@ public struct ConfettiSimulation: Sendable {
     }
 
     /// Resumes a paused simulation.
-    /// - Parameter date: Current time (used to synchronize frame timing)
-    public mutating func resume(at date: Date) {
+    /// - Parameter currentTime: Current time (used to synchronize frame timing)
+    public mutating func resume(at currentTime: Date) {
         guard state.isRunning, state.isPaused else { return }
         state.isPaused = false
-        state.lastTickTime = date
+        state.lastUpdateTime = currentTime
         state.accumulatedTime = 0
     }
 
@@ -130,8 +130,8 @@ public struct ConfettiSimulation: Sendable {
     /// This recomputes the simulation from the initial state to the target time.
     /// - Parameters:
     ///   - time: Target simulation time (clamped to 0...duration)
-    ///   - bounds: Size of the simulation area
-    public mutating func seek(to time: TimeInterval, bounds: CGSize) {
+    ///   - area: Size of the simulation area
+    public mutating func seek(to time: TimeInterval, area bounds: CGSize) {
         guard state.isRunning, let initialCloud = state.initialCloud else { return }
 
         let targetTime = max(0, min(time, configuration.lifecycle.duration))
@@ -148,7 +148,7 @@ public struct ConfettiSimulation: Sendable {
         let stepsNeeded = Int(targetTime / fixedDeltaTime)
         for _ in 0 ..< stepsNeeded {
             state.simulationTime += fixedDeltaTime
-            step(deltaTime: fixedDeltaTime, elapsed: state.simulationTime, bounds: bounds)
+            step(deltaTime: fixedDeltaTime, elapsed: state.simulationTime, area: bounds)
         }
     }
 
@@ -157,9 +157,9 @@ public struct ConfettiSimulation: Sendable {
     /// Automatically calls `stop()` if `duration` is exceeded.
     /// Does nothing if paused.
     /// - Parameters:
-    ///   - at: Current time
-    ///   - bounds: Size of the simulation area (used for out-of-bounds detection)
-    public mutating func tick(at date: Date, bounds: CGSize) {
+    ///   - currentTime: Current time
+    ///   - area: Size of the simulation area (used for out-of-bounds detection)
+    public mutating func update(at currentTime: Date, area bounds: CGSize) {
         guard state.isPlaying else { return }
         guard let startTime = state.startTime else { return }
 
@@ -170,7 +170,7 @@ public struct ConfettiSimulation: Sendable {
         }
 
         // Also check wall-clock time as a fallback for edge cases
-        let wallElapsed = date.timeIntervalSince(startTime)
+        let wallElapsed = currentTime.timeIntervalSince(startTime)
         if wallElapsed > configuration.lifecycle.duration + 1.0 {
             stop()
             return
@@ -180,9 +180,9 @@ public struct ConfettiSimulation: Sendable {
         let fixedDeltaTime = configuration.physics.fixedDeltaTime
         guard fixedDeltaTime > 0 else { return }
 
-        let lastTick = state.lastTickTime ?? date
-        var frameDelta = date.timeIntervalSince(lastTick)
-        state.lastTickTime = date
+        let lastUpdate = state.lastUpdateTime ?? currentTime
+        var frameDelta = currentTime.timeIntervalSince(lastUpdate)
+        state.lastUpdateTime = currentTime
 
         // Guard against large time jumps (backgrounding etc.)
         if frameDelta.isNaN || frameDelta.isInfinite { frameDelta = 0 }
@@ -202,7 +202,7 @@ public struct ConfettiSimulation: Sendable {
         let stepsToRun = min(availableSteps, maxStepsPerTick)
         for _ in 0 ..< stepsToRun {
             state.simulationTime += fixedDeltaTime
-            step(deltaTime: fixedDeltaTime, elapsed: state.simulationTime, bounds: bounds)
+            step(deltaTime: fixedDeltaTime, elapsed: state.simulationTime, area: bounds)
         }
         state.accumulatedTime -= TimeInterval(stepsToRun) * fixedDeltaTime
 
@@ -288,73 +288,184 @@ public struct ConfettiSimulation: Sendable {
 
     // MARK: - Private - Simulation Step
 
-    private mutating func step(deltaTime: TimeInterval, elapsed: TimeInterval, bounds: CGSize) {
+    private mutating func step(deltaTime: TimeInterval, elapsed: TimeInterval, area bounds: CGSize) {
         guard var cloud = state.cloud else { return }
 
         for index in 0 ..< cloud.aliveCount {
             let traits = cloud.traits[index]
-            var confetto = cloud.states[index]
+            var particleState = cloud.states[index]
 
-            // Gravity
-            confetto.velocity.dy += configuration.physics.gravity * deltaTime
+            // 1. Apply physics forces
+            applyGravity(to: &particleState, deltaTime: deltaTime)
+            let windVariation = applyWind(
+                to: &particleState,
+                traits: traits,
+                elapsed: elapsed,
+                particleIndex: index,
+                deltaTime: deltaTime
+            )
+            applyDrag(to: &particleState)
+            clampTerminalVelocity(of: &particleState)
 
-            // Wind (sine wave)
-            let windVariation = sin(
-                elapsed * configuration.wind.timeScale + Double(index) * configuration.wind.particlePhaseScale
-            ) * traits.windForce
-            confetto.velocity.dx += windVariation * deltaTime
+            // 2. Update motion
+            updatePosition(of: &particleState, deltaTime: deltaTime)
 
-            // Drag
-            confetto.velocity.dx *= configuration.physics.drag
-            confetto.velocity.dy *= configuration.physics.drag
-
-            // Terminal velocity (falling only)
-            if confetto.velocity.dy > configuration.physics.terminalVelocity {
-                confetto.velocity.dy = configuration.physics.terminalVelocity
-            }
-
-            // Position
-            confetto.position.x += confetto.velocity.dx * deltaTime
-            confetto.position.y += confetto.velocity.dy * deltaTime
-
-            // Out-of-bounds removal
-            let margin = configuration.spawn.boundaryMargin
-            let isOffscreen = confetto.position.y < -margin
-                || confetto.position.y > bounds.height + margin
-                || confetto.position.x < -margin
-                || confetto.position.x > bounds.width + margin
-            if isOffscreen {
-                confetto.opacity = 0
-                cloud.states[index] = confetto
+            // 3. Check boundaries
+            if isOutOfBounds(particleState, area: bounds) {
+                particleState.opacity = 0
+                cloud.states[index] = particleState
                 continue
             }
 
-            // Rotation (flutter)
-            let xRotationFromVelocity = confetto.velocity.dy * RotationDynamics.velocityToRotationX
-            let xRotationFromWind = windVariation * RotationDynamics.windToRotationX
-            confetto.rotationX += (traits.rotationXSpeed + xRotationFromVelocity + xRotationFromWind) * deltaTime
+            // 4. Update rotation
+            updateRotation(
+                of: &particleState,
+                traits: traits,
+                windVariation: windVariation,
+                deltaTime: deltaTime
+            )
 
-            let yRotationFromVelocity = confetto.velocity.dx * RotationDynamics.velocityToRotationY
-            let yRotationFromWind = windVariation * RotationDynamics.windToRotationY
-            confetto.rotationY += (traits.rotationYSpeed + yRotationFromVelocity + yRotationFromWind) * deltaTime
+            // 5. Apply fade-out
+            applyFadeOut(to: &particleState, elapsed: elapsed)
 
-            let fallSpeed = abs(confetto.velocity.dy)
-            if fallSpeed > RotationDynamics.fastFallThreshold {
-                confetto.rotationX += fallSpeed * RotationDynamics.fastFallRotationX * deltaTime
-                confetto.rotationY += fallSpeed * RotationDynamics.fastFallRotationY * deltaTime
-            }
-
-            // Fade-out (last fadeOutDuration seconds)
-            let fadeStart = configuration.lifecycle.duration - configuration.lifecycle.fadeOutDuration
-            if elapsed > fadeStart {
-                let fadeProgress = (elapsed - fadeStart) / configuration.lifecycle.fadeOutDuration
-                confetto.opacity = max(0, 1.0 - fadeProgress)
-            }
-
-            cloud.states[index] = confetto
+            cloud.states[index] = particleState
         }
 
         cloud.compact()
         state.cloud = cloud
+    }
+
+    // MARK: - Physics Forces
+
+    /// Applies gravity to particle velocity.
+    private func applyGravity(to state: inout ConfettoState, deltaTime: TimeInterval) {
+        state.velocity.dy += configuration.physics.gravity * deltaTime
+    }
+
+    /// Applies wind force to particle velocity and returns the wind variation for rotation calculation.
+    /// - Returns: Current wind strength (used in rotation calculation)
+    private func applyWind(
+        to state: inout ConfettoState,
+        traits: ConfettoTraits,
+        elapsed: TimeInterval,
+        particleIndex: Int,
+        deltaTime: TimeInterval
+    ) -> Double {
+        let windVariation = sin(
+            elapsed * configuration.wind.timeScale +
+                Double(particleIndex) * configuration.wind.particlePhaseScale
+        ) * traits.windForce
+
+        state.velocity.dx += windVariation * deltaTime
+        return windVariation
+    }
+
+    /// Applies drag (air resistance) to particle velocity.
+    private func applyDrag(to state: inout ConfettoState) {
+        state.velocity.dx *= configuration.physics.drag
+        state.velocity.dy *= configuration.physics.drag
+    }
+
+    /// Limits terminal velocity (falling direction only).
+    private func clampTerminalVelocity(of state: inout ConfettoState) {
+        if state.velocity.dy > configuration.physics.terminalVelocity {
+            state.velocity.dy = configuration.physics.terminalVelocity
+        }
+    }
+
+    // MARK: - Motion
+
+    /// Updates particle position based on velocity.
+    private func updatePosition(of state: inout ConfettoState, deltaTime: TimeInterval) {
+        state.position.x += state.velocity.dx * deltaTime
+        state.position.y += state.velocity.dy * deltaTime
+    }
+
+    // MARK: - Boundaries
+
+    /// Checks if particle has moved outside the simulation area.
+    private func isOutOfBounds(_ state: ConfettoState, area bounds: CGSize) -> Bool {
+        let margin = configuration.spawn.boundaryMargin
+        return state.position.y < -margin
+            || state.position.y > bounds.height + margin
+            || state.position.x < -margin
+            || state.position.x > bounds.width + margin
+    }
+
+    // MARK: - Rotation
+
+    /// Updates particle rotation based on velocity, wind, and fast-fall effects.
+    private func updateRotation(
+        of state: inout ConfettoState,
+        traits: ConfettoTraits,
+        windVariation: Double,
+        deltaTime: TimeInterval
+    ) {
+        updateRotationX(of: &state, traits: traits, windVariation: windVariation, deltaTime: deltaTime)
+        updateRotationY(of: &state, traits: traits, windVariation: windVariation, deltaTime: deltaTime)
+    }
+
+    /// Updates X-axis rotation (flutter effect).
+    private func updateRotationX(
+        of state: inout ConfettoState,
+        traits: ConfettoTraits,
+        windVariation: Double,
+        deltaTime: TimeInterval
+    ) {
+        // Base rotation speed
+        var rotationSpeed = traits.rotationXSpeed
+
+        // Velocity influence
+        rotationSpeed += state.velocity.dy * RotationDynamics.velocityToRotationX
+
+        // Wind influence
+        rotationSpeed += windVariation * RotationDynamics.windToRotationX
+
+        // Apply rotation
+        state.rotationX += rotationSpeed * deltaTime
+
+        // Additional rotation during fast fall
+        let fallSpeed = abs(state.velocity.dy)
+        if fallSpeed > RotationDynamics.fastFallThreshold {
+            state.rotationX += fallSpeed * RotationDynamics.fastFallRotationX * deltaTime
+        }
+    }
+
+    /// Updates Y-axis rotation (flip effect).
+    private func updateRotationY(
+        of state: inout ConfettoState,
+        traits: ConfettoTraits,
+        windVariation: Double,
+        deltaTime: TimeInterval
+    ) {
+        // Base rotation speed
+        var rotationSpeed = traits.rotationYSpeed
+
+        // Velocity influence
+        rotationSpeed += state.velocity.dx * RotationDynamics.velocityToRotationY
+
+        // Wind influence
+        rotationSpeed += windVariation * RotationDynamics.windToRotationY
+
+        // Apply rotation
+        state.rotationY += rotationSpeed * deltaTime
+
+        // Additional rotation during fast fall
+        let fallSpeed = abs(state.velocity.dy)
+        if fallSpeed > RotationDynamics.fastFallThreshold {
+            state.rotationY += fallSpeed * RotationDynamics.fastFallRotationY * deltaTime
+        }
+    }
+
+    // MARK: - Lifecycle
+
+    /// Applies fade-out effect during the last seconds of the simulation.
+    private func applyFadeOut(to state: inout ConfettoState, elapsed: TimeInterval) {
+        let fadeStart = configuration.lifecycle.duration - configuration.lifecycle.fadeOutDuration
+
+        if elapsed > fadeStart {
+            let fadeProgress = (elapsed - fadeStart) / configuration.lifecycle.fadeOutDuration
+            state.opacity = max(0, 1.0 - fadeProgress)
+        }
     }
 }

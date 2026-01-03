@@ -32,17 +32,17 @@ func startCreatesExpectedParticleCount() {
     var numberGenerator: any RandomNumberGenerator = SeededRandomNumberGenerator(seed: 1)
 
     simulation.start(
-        bounds: CGSize(width: 300, height: 600),
+        area: CGSize(width: 300, height: 600),
         at: Date(timeIntervalSince1970: 0),
         colorSource: ConstantColorSource(),
-        using: &numberGenerator
+        randomNumberGenerator: &numberGenerator
     )
 
     #expect(simulation.state.isRunning)
     #expect(simulation.state.cloud?.aliveCount == 10)
 }
 
-@Test("tick: duration経過後にシミュレーションが停止する")
+@Test("update: duration経過後にシミュレーションが停止する")
 func tickStopsAfterDuration() {
     var configuration = ConfettiConfig()
     configuration.lifecycle.particleCount = 3
@@ -55,13 +55,13 @@ func tickStopsAfterDuration() {
     let bounds = CGSize(width: 300, height: 600)
     let startTime = Date(timeIntervalSince1970: 0)
 
-    simulation.start(bounds: bounds, at: startTime, colorSource: ConstantColorSource(), using: &numberGenerator)
+    simulation.start(area: bounds, at: startTime, colorSource: ConstantColorSource(), randomNumberGenerator: &numberGenerator)
     #expect(simulation.state.isRunning)
 
-    simulation.tick(at: startTime.addingTimeInterval(0.05), bounds: bounds)
-    simulation.tick(at: startTime.addingTimeInterval(0.10), bounds: bounds)
-    simulation.tick(at: startTime.addingTimeInterval(0.15), bounds: bounds)
-    simulation.tick(at: startTime.addingTimeInterval(0.20), bounds: bounds)
+    simulation.update(at: startTime.addingTimeInterval(0.05), area: bounds)
+    simulation.update(at: startTime.addingTimeInterval(0.10), area: bounds)
+    simulation.update(at: startTime.addingTimeInterval(0.15), area: bounds)
+    simulation.update(at: startTime.addingTimeInterval(0.20), area: bounds)
 
     #expect(!simulation.state.isRunning)
     #expect(simulation.state.cloud == nil)
@@ -76,10 +76,10 @@ func stopClearsState() {
     var numberGenerator: any RandomNumberGenerator = SeededRandomNumberGenerator(seed: 1)
 
     simulation.start(
-        bounds: CGSize(width: 300, height: 600),
+        area: CGSize(width: 300, height: 600),
         at: Date(),
         colorSource: ConstantColorSource(),
-        using: &numberGenerator
+        randomNumberGenerator: &numberGenerator
     )
     #expect(simulation.state.isRunning)
 
@@ -101,11 +101,11 @@ func pauseStopsSimulationProgress() {
     let bounds = CGSize(width: 300, height: 600)
     let startTime = Date(timeIntervalSince1970: 0)
 
-    simulation.start(bounds: bounds, at: startTime, colorSource: ConstantColorSource(), using: &numberGenerator)
+    simulation.start(area: bounds, at: startTime, colorSource: ConstantColorSource(), randomNumberGenerator: &numberGenerator)
     #expect(simulation.state.isPlaying)
     #expect(!simulation.state.isPaused)
 
-    simulation.tick(at: startTime.addingTimeInterval(0.1), bounds: bounds)
+    simulation.update(at: startTime.addingTimeInterval(0.1), area: bounds)
     let timeBeforePause = simulation.currentTime
 
     simulation.pause()
@@ -113,7 +113,7 @@ func pauseStopsSimulationProgress() {
     #expect(simulation.state.isPaused)
     #expect(!simulation.state.isPlaying)
 
-    simulation.tick(at: startTime.addingTimeInterval(0.2), bounds: bounds)
+    simulation.update(at: startTime.addingTimeInterval(0.2), area: bounds)
     #expect(simulation.currentTime == timeBeforePause)
 }
 
@@ -128,8 +128,8 @@ func resumeContinuesSimulation() {
     let bounds = CGSize(width: 300, height: 600)
     let startTime = Date(timeIntervalSince1970: 0)
 
-    simulation.start(bounds: bounds, at: startTime, colorSource: ConstantColorSource(), using: &numberGenerator)
-    simulation.tick(at: startTime.addingTimeInterval(0.1), bounds: bounds)
+    simulation.start(area: bounds, at: startTime, colorSource: ConstantColorSource(), randomNumberGenerator: &numberGenerator)
+    simulation.update(at: startTime.addingTimeInterval(0.1), area: bounds)
     let timeBeforePause = simulation.currentTime
 
     simulation.pause()
@@ -140,7 +140,7 @@ func resumeContinuesSimulation() {
     #expect(!simulation.state.isPaused)
     #expect(simulation.state.isPlaying)
 
-    simulation.tick(at: resumeTime.addingTimeInterval(0.1), bounds: bounds)
+    simulation.update(at: resumeTime.addingTimeInterval(0.1), area: bounds)
     #expect(simulation.currentTime > timeBeforePause)
 }
 
@@ -158,9 +158,9 @@ func seekJumpsToTargetTime() {
     let bounds = CGSize(width: 300, height: 600)
     let startTime = Date(timeIntervalSince1970: 0)
 
-    simulation.start(bounds: bounds, at: startTime, colorSource: ConstantColorSource(), using: &numberGenerator)
+    simulation.start(area: bounds, at: startTime, colorSource: ConstantColorSource(), randomNumberGenerator: &numberGenerator)
 
-    simulation.seek(to: 1.5, bounds: bounds)
+    simulation.seek(to: 1.5, area: bounds)
 
     let fixedDeltaTime = configuration.physics.fixedDeltaTime
     let expectedSteps = Int(1.5 / fixedDeltaTime)
@@ -180,12 +180,12 @@ func seekClampsToValidRange() {
     let bounds = CGSize(width: 300, height: 600)
     let startTime = Date(timeIntervalSince1970: 0)
 
-    simulation.start(bounds: bounds, at: startTime, colorSource: ConstantColorSource(), using: &numberGenerator)
+    simulation.start(area: bounds, at: startTime, colorSource: ConstantColorSource(), randomNumberGenerator: &numberGenerator)
 
-    simulation.seek(to: 10.0, bounds: bounds)
+    simulation.seek(to: 10.0, area: bounds)
     #expect(simulation.currentTime <= configuration.lifecycle.duration)
 
-    simulation.seek(to: -1.0, bounds: bounds)
+    simulation.seek(to: -1.0, area: bounds)
     #expect(simulation.currentTime >= 0)
 }
 
@@ -201,10 +201,10 @@ func seekPreservesInitialState() {
     let bounds = CGSize(width: 300, height: 600)
     let startTime = Date(timeIntervalSince1970: 0)
 
-    simulation.start(bounds: bounds, at: startTime, colorSource: ConstantColorSource(), using: &numberGenerator)
+    simulation.start(area: bounds, at: startTime, colorSource: ConstantColorSource(), randomNumberGenerator: &numberGenerator)
 
-    simulation.seek(to: 1.0, bounds: bounds)
-    simulation.seek(to: 0.0, bounds: bounds)
+    simulation.seek(to: 1.0, area: bounds)
+    simulation.seek(to: 0.0, area: bounds)
 
     #expect(simulation.currentTime == 0)
     #expect(simulation.state.cloud?.aliveCount == 5)
@@ -230,7 +230,7 @@ func currentTimeStartsAtZero() {
     var numberGenerator: any RandomNumberGenerator = SeededRandomNumberGenerator(seed: 1)
     let bounds = CGSize(width: 300, height: 600)
 
-    simulation.start(bounds: bounds, at: Date(), colorSource: ConstantColorSource(), using: &numberGenerator)
+    simulation.start(area: bounds, at: Date(), colorSource: ConstantColorSource(), randomNumberGenerator: &numberGenerator)
     #expect(simulation.currentTime == 0)
 }
 
@@ -248,7 +248,7 @@ func particleCountCreatesExpectedParticles(count: Int) {
     var numberGenerator: any RandomNumberGenerator = SeededRandomNumberGenerator(seed: 1)
     let bounds = CGSize(width: 300, height: 600)
 
-    simulation.start(bounds: bounds, at: Date(), colorSource: ConstantColorSource(), using: &numberGenerator)
+    simulation.start(area: bounds, at: Date(), colorSource: ConstantColorSource(), randomNumberGenerator: &numberGenerator)
 
     #expect(simulation.state.isRunning)
     #expect(simulation.state.cloud?.aliveCount == count)
@@ -265,11 +265,11 @@ func seekExactlyZeroResetsToInitialState() {
     var numberGenerator: any RandomNumberGenerator = SeededRandomNumberGenerator(seed: 1)
     let bounds = CGSize(width: 300, height: 600)
 
-    simulation.start(bounds: bounds, at: Date(), colorSource: ConstantColorSource(), using: &numberGenerator)
+    simulation.start(area: bounds, at: Date(), colorSource: ConstantColorSource(), randomNumberGenerator: &numberGenerator)
     let initialPositions = simulation.state.cloud?.states.map(\.position)
 
-    simulation.seek(to: 1.0, bounds: bounds)
-    simulation.seek(to: 0.0, bounds: bounds)
+    simulation.seek(to: 1.0, area: bounds)
+    simulation.seek(to: 0.0, area: bounds)
 
     let resetPositions = simulation.state.cloud?.states.map(\.position)
     #expect(simulation.currentTime == 0)
@@ -287,8 +287,8 @@ func seekExactlyDurationAdvancesToEnd() {
     var numberGenerator: any RandomNumberGenerator = SeededRandomNumberGenerator(seed: 1)
     let bounds = CGSize(width: 300, height: 600)
 
-    simulation.start(bounds: bounds, at: Date(), colorSource: ConstantColorSource(), using: &numberGenerator)
-    simulation.seek(to: configuration.lifecycle.duration, bounds: bounds)
+    simulation.start(area: bounds, at: Date(), colorSource: ConstantColorSource(), randomNumberGenerator: &numberGenerator)
+    simulation.seek(to: configuration.lifecycle.duration, area: bounds)
 
     let fixedDeltaTime = configuration.physics.fixedDeltaTime
     let expectedSteps = Int(configuration.lifecycle.duration / fixedDeltaTime)
@@ -309,10 +309,10 @@ func boundsVerySmallParticlesGoOutOfBoundsQuickly() {
     let bounds = CGSize(width: 1, height: 1)
     let startTime = Date(timeIntervalSince1970: 0)
 
-    simulation.start(bounds: bounds, at: startTime, colorSource: ConstantColorSource(), using: &numberGenerator)
+    simulation.start(area: bounds, at: startTime, colorSource: ConstantColorSource(), randomNumberGenerator: &numberGenerator)
 
     for i in 1 ... 10 {
-        simulation.tick(at: startTime.addingTimeInterval(Double(i) * 0.05), bounds: bounds)
+        simulation.update(at: startTime.addingTimeInterval(Double(i) * 0.05), area: bounds)
     }
 
     #expect((simulation.state.cloud?.aliveCount ?? 0) < 5)
@@ -355,14 +355,14 @@ func outOfBoundsParticleRemoval(testCase: OutOfBoundsTestCase) {
     let bounds = CGSize(width: 100, height: 100)
     let startTime = Date(timeIntervalSince1970: 0)
 
-    simulation.start(bounds: bounds, at: startTime, colorSource: ConstantColorSource(), using: &numberGenerator)
+    simulation.start(area: bounds, at: startTime, colorSource: ConstantColorSource(), randomNumberGenerator: &numberGenerator)
 
     simulation.withCloudForTesting { cloud in
         cloud.states[0].position = testCase.position
         cloud.states[0].velocity = .zero
     }
 
-    simulation.tick(at: startTime.addingTimeInterval(configuration.physics.fixedDeltaTime), bounds: bounds)
+    simulation.update(at: startTime.addingTimeInterval(configuration.physics.fixedDeltaTime), area: bounds)
 
     if testCase.shouldBeRemoved {
         #expect(simulation.state.cloud?.aliveCount == 0, "位置 \(testCase.name) で削除されるべき")
@@ -385,10 +385,10 @@ func stateTransitionStoppedToRunning() {
     #expect(!simulation.state.isPlaying)
 
     simulation.start(
-        bounds: CGSize(width: 300, height: 600),
+        area: CGSize(width: 300, height: 600),
         at: Date(),
         colorSource: ConstantColorSource(),
-        using: &numberGenerator
+        randomNumberGenerator: &numberGenerator
     )
 
     #expect(simulation.state.isRunning)
@@ -406,10 +406,10 @@ func stateTransitionRunningToPausedToRunning() {
     let startTime = Date(timeIntervalSince1970: 0)
 
     simulation.start(
-        bounds: CGSize(width: 300, height: 600),
+        area: CGSize(width: 300, height: 600),
         at: startTime,
         colorSource: ConstantColorSource(),
-        using: &numberGenerator
+        randomNumberGenerator: &numberGenerator
     )
     #expect(simulation.state.isPlaying)
 
@@ -433,10 +433,10 @@ func stateTransitionPausedToStopped() {
     var numberGenerator: any RandomNumberGenerator = SeededRandomNumberGenerator(seed: 1)
 
     simulation.start(
-        bounds: CGSize(width: 300, height: 600),
+        area: CGSize(width: 300, height: 600),
         at: Date(),
         colorSource: ConstantColorSource(),
-        using: &numberGenerator
+        randomNumberGenerator: &numberGenerator
     )
     simulation.pause()
     #expect(simulation.state.isPaused)
@@ -456,10 +456,10 @@ func stateTransitionPauseWhenAlreadyPausedNoChange() {
     var numberGenerator: any RandomNumberGenerator = SeededRandomNumberGenerator(seed: 1)
 
     simulation.start(
-        bounds: CGSize(width: 300, height: 600),
+        area: CGSize(width: 300, height: 600),
         at: Date(),
         colorSource: ConstantColorSource(),
-        using: &numberGenerator
+        randomNumberGenerator: &numberGenerator
     )
     simulation.pause()
     let stateAfterFirstPause = simulation.state
@@ -478,10 +478,10 @@ func stateTransitionResumeWhenNotPausedNoChange() {
     var numberGenerator: any RandomNumberGenerator = SeededRandomNumberGenerator(seed: 1)
 
     simulation.start(
-        bounds: CGSize(width: 300, height: 600),
+        area: CGSize(width: 300, height: 600),
         at: Date(),
         colorSource: ConstantColorSource(),
-        using: &numberGenerator
+        randomNumberGenerator: &numberGenerator
     )
     let stateBeforeResume = simulation.state
 
@@ -525,14 +525,14 @@ func tickWithMinimumFixedDeltaTimeWorksNormally() {
     let startTime = Date(timeIntervalSince1970: 0)
     let bounds = CGSize(width: 300, height: 600)
 
-    simulation.start(bounds: bounds, at: startTime, colorSource: ConstantColorSource(), using: &numberGenerator)
+    simulation.start(area: bounds, at: startTime, colorSource: ConstantColorSource(), randomNumberGenerator: &numberGenerator)
 
-    simulation.tick(at: startTime.addingTimeInterval(0.1), bounds: bounds)
+    simulation.update(at: startTime.addingTimeInterval(0.1), area: bounds)
     #expect(simulation.state.isRunning)
     #expect(simulation.currentTime > 0)
 }
 
-@Test("エッジケース: 同一時刻でtickしても進まない")
+@Test("エッジケース: 同一時刻でupdateしても進まない")
 func tickWithSameTimeDoesNotAdvance() {
     var configuration = ConfettiConfig()
     configuration.lifecycle.particleCount = 5
@@ -543,9 +543,9 @@ func tickWithSameTimeDoesNotAdvance() {
     let startTime = Date(timeIntervalSince1970: 0)
     let bounds = CGSize(width: 300, height: 600)
 
-    simulation.start(bounds: bounds, at: startTime, colorSource: ConstantColorSource(), using: &numberGenerator)
+    simulation.start(area: bounds, at: startTime, colorSource: ConstantColorSource(), randomNumberGenerator: &numberGenerator)
 
-    simulation.tick(at: startTime, bounds: bounds)
+    simulation.update(at: startTime, area: bounds)
     #expect(simulation.currentTime == 0)
 }
 
@@ -561,19 +561,19 @@ func tickWithLargeTimeJumpLimitsStepsPerTick() {
     let startTime = Date(timeIntervalSince1970: 0)
     let bounds = CGSize(width: 300, height: 600)
 
-    simulation.start(bounds: bounds, at: startTime, colorSource: ConstantColorSource(), using: &numberGenerator)
+    simulation.start(area: bounds, at: startTime, colorSource: ConstantColorSource(), randomNumberGenerator: &numberGenerator)
 
-    simulation.tick(at: startTime.addingTimeInterval(10.0), bounds: bounds)
+    simulation.update(at: startTime.addingTimeInterval(10.0), area: bounds)
 
     #expect(simulation.currentTime < 1.0)
 }
 
-@Test("エッジケース: 開始前のtickは無視される")
+@Test("エッジケース: 開始前のupdateは無視される")
 func tickBeforeStartNoChange() {
     var simulation = ConfettiSimulation(configuration: ConfettiConfig())
     let bounds = CGSize(width: 300, height: 600)
 
-    simulation.tick(at: Date(), bounds: bounds)
+    simulation.update(at: Date(), area: bounds)
 
     #expect(!simulation.state.isRunning)
     #expect(simulation.state.cloud == nil)
@@ -584,7 +584,7 @@ func seekBeforeStartNoChange() {
     var simulation = ConfettiSimulation(configuration: ConfettiConfig())
     let bounds = CGSize(width: 300, height: 600)
 
-    simulation.seek(to: 1.0, bounds: bounds)
+    simulation.seek(to: 1.0, area: bounds)
 
     #expect(!simulation.state.isRunning)
     #expect(simulation.currentTime == 0)
@@ -601,12 +601,12 @@ func multipleStartsResetsState() {
     let bounds = CGSize(width: 300, height: 600)
     let startTime = Date(timeIntervalSince1970: 0)
 
-    simulation.start(bounds: bounds, at: startTime, colorSource: ConstantColorSource(), using: &numberGenerator)
-    simulation.tick(at: startTime.addingTimeInterval(0.5), bounds: bounds)
+    simulation.start(area: bounds, at: startTime, colorSource: ConstantColorSource(), randomNumberGenerator: &numberGenerator)
+    simulation.update(at: startTime.addingTimeInterval(0.5), area: bounds)
     let timeAfterFirstRun = simulation.currentTime
     #expect(timeAfterFirstRun > 0)
 
-    simulation.start(bounds: bounds, at: startTime, colorSource: ConstantColorSource(), using: &numberGenerator)
+    simulation.start(area: bounds, at: startTime, colorSource: ConstantColorSource(), randomNumberGenerator: &numberGenerator)
     #expect(simulation.currentTime == 0)
     #expect(simulation.state.cloud?.aliveCount == 5)
 }
@@ -624,14 +624,14 @@ func determinismSameSeedProducesSameResults() {
 
     var simulation1 = ConfettiSimulation(configuration: configuration)
     var rng1: any RandomNumberGenerator = SeededRandomNumberGenerator(seed: 42)
-    simulation1.start(bounds: bounds, at: startTime, colorSource: ConstantColorSource(), using: &rng1)
-    simulation1.tick(at: startTime.addingTimeInterval(0.1), bounds: bounds)
+    simulation1.start(area: bounds, at: startTime, colorSource: ConstantColorSource(), randomNumberGenerator: &rng1)
+    simulation1.update(at: startTime.addingTimeInterval(0.1), area: bounds)
     let positions1 = simulation1.state.cloud?.states.map(\.position)
 
     var simulation2 = ConfettiSimulation(configuration: configuration)
     var rng2: any RandomNumberGenerator = SeededRandomNumberGenerator(seed: 42)
-    simulation2.start(bounds: bounds, at: startTime, colorSource: ConstantColorSource(), using: &rng2)
-    simulation2.tick(at: startTime.addingTimeInterval(0.1), bounds: bounds)
+    simulation2.start(area: bounds, at: startTime, colorSource: ConstantColorSource(), randomNumberGenerator: &rng2)
+    simulation2.update(at: startTime.addingTimeInterval(0.1), area: bounds)
     let positions2 = simulation2.state.cloud?.states.map(\.position)
 
     #expect(positions1 == positions2)
@@ -647,12 +647,12 @@ func determinismDifferentSeedsProduceDifferentResults() {
 
     var simulation1 = ConfettiSimulation(configuration: configuration)
     var rng1: any RandomNumberGenerator = SeededRandomNumberGenerator(seed: 1)
-    simulation1.start(bounds: bounds, at: startTime, colorSource: ConstantColorSource(), using: &rng1)
+    simulation1.start(area: bounds, at: startTime, colorSource: ConstantColorSource(), randomNumberGenerator: &rng1)
     let velocities1 = simulation1.state.cloud?.states.map(\.velocity)
 
     var simulation2 = ConfettiSimulation(configuration: configuration)
     var rng2: any RandomNumberGenerator = SeededRandomNumberGenerator(seed: 2)
-    simulation2.start(bounds: bounds, at: startTime, colorSource: ConstantColorSource(), using: &rng2)
+    simulation2.start(area: bounds, at: startTime, colorSource: ConstantColorSource(), randomNumberGenerator: &rng2)
     let velocities2 = simulation2.state.cloud?.states.map(\.velocity)
 
     #expect(velocities1 != velocities2)
@@ -669,12 +669,12 @@ func seekIsDeterministic() {
 
     var simulation = ConfettiSimulation(configuration: configuration)
     var rng: any RandomNumberGenerator = SeededRandomNumberGenerator(seed: 42)
-    simulation.start(bounds: bounds, at: startTime, colorSource: ConstantColorSource(), using: &rng)
-    simulation.seek(to: 1.0, bounds: bounds)
+    simulation.start(area: bounds, at: startTime, colorSource: ConstantColorSource(), randomNumberGenerator: &rng)
+    simulation.seek(to: 1.0, area: bounds)
     let positionsAfterSeek = simulation.state.cloud?.states.map(\.position)
 
-    simulation.seek(to: 0, bounds: bounds)
-    simulation.seek(to: 1.0, bounds: bounds)
+    simulation.seek(to: 0, area: bounds)
+    simulation.seek(to: 1.0, area: bounds)
     let positionsAfterReSeek = simulation.state.cloud?.states.map(\.position)
 
     #expect(positionsAfterSeek == positionsAfterReSeek)
@@ -697,7 +697,7 @@ func physicsGravityAcceleratesDownward() {
     let bounds = CGSize(width: 300, height: 600)
     let startTime = Date(timeIntervalSince1970: 0)
 
-    simulation.start(bounds: bounds, at: startTime, colorSource: ConstantColorSource(), using: &numberGenerator)
+    simulation.start(area: bounds, at: startTime, colorSource: ConstantColorSource(), randomNumberGenerator: &numberGenerator)
 
     // 初期状態を固定
     simulation.withCloudForTesting { cloud in
@@ -709,9 +709,9 @@ func physicsGravityAcceleratesDownward() {
 
     // 複数フレーム進める
     for i in 1 ... 10 {
-        simulation.tick(
+        simulation.update(
             at: startTime.addingTimeInterval(Double(i) * configuration.physics.fixedDeltaTime),
-            bounds: bounds
+            area: bounds
         )
     }
 
@@ -736,7 +736,7 @@ func physicsDragDeceleratesVelocity() {
     let bounds = CGSize(width: 300, height: 600)
     let startTime = Date(timeIntervalSince1970: 0)
 
-    simulation.start(bounds: bounds, at: startTime, colorSource: ConstantColorSource(), using: &numberGenerator)
+    simulation.start(area: bounds, at: startTime, colorSource: ConstantColorSource(), randomNumberGenerator: &numberGenerator)
 
     // 初速度を設定
     simulation.withCloudForTesting { cloud in
@@ -747,7 +747,7 @@ func physicsDragDeceleratesVelocity() {
     let initialVelocityX = simulation.state.cloud?.states[0].velocity.dx ?? 0
 
     // 1フレーム進める
-    simulation.tick(at: startTime.addingTimeInterval(configuration.physics.fixedDeltaTime), bounds: bounds)
+    simulation.update(at: startTime.addingTimeInterval(configuration.physics.fixedDeltaTime), area: bounds)
 
     let finalVelocityX = simulation.state.cloud?.states[0].velocity.dx ?? 0
 
@@ -771,7 +771,7 @@ func physicsTerminalVelocityNotExceeded() {
     let bounds = CGSize(width: 300, height: 10000)
     let startTime = Date(timeIntervalSince1970: 0)
 
-    simulation.start(bounds: bounds, at: startTime, colorSource: ConstantColorSource(), using: &numberGenerator)
+    simulation.start(area: bounds, at: startTime, colorSource: ConstantColorSource(), randomNumberGenerator: &numberGenerator)
 
     simulation.withCloudForTesting { cloud in
         cloud.states[0].position = CGPoint(x: 150, y: 100)
@@ -780,9 +780,9 @@ func physicsTerminalVelocityNotExceeded() {
 
     // 多くのフレーム進める
     for i in 1 ... 100 {
-        simulation.tick(
+        simulation.update(
             at: startTime.addingTimeInterval(Double(i) * configuration.physics.fixedDeltaTime),
-            bounds: bounds
+            area: bounds
         )
     }
 
@@ -809,7 +809,7 @@ func fadeOutReducesOpacityNearEnd() {
     let bounds = CGSize(width: 300, height: 600)
     let startTime = Date(timeIntervalSince1970: 0)
 
-    simulation.start(bounds: bounds, at: startTime, colorSource: ConstantColorSource(), using: &numberGenerator)
+    simulation.start(area: bounds, at: startTime, colorSource: ConstantColorSource(), randomNumberGenerator: &numberGenerator)
 
     // 中央に配置して境界外に出ないようにする
     simulation.withCloudForTesting { cloud in
@@ -818,11 +818,11 @@ func fadeOutReducesOpacityNearEnd() {
     }
 
     // フェードアウト開始前（1.0秒）
-    simulation.seek(to: 0.5, bounds: bounds)
+    simulation.seek(to: 0.5, area: bounds)
     let opacityBeforeFade = simulation.state.cloud?.states[0].opacity ?? 0
 
     // フェードアウト中（1.5秒 = duration - fadeOutDuration/2）
-    simulation.seek(to: 1.5, bounds: bounds)
+    simulation.seek(to: 1.5, area: bounds)
     let opacityDuringFade = simulation.state.cloud?.states[0].opacity ?? 0
 
     #expect(opacityBeforeFade == 1.0, "フェードアウト前はopacity=1.0")
@@ -841,8 +841,8 @@ func seekToVariousTimes(targetTime: Double) {
     var numberGenerator: any RandomNumberGenerator = SeededRandomNumberGenerator(seed: 1)
     let bounds = CGSize(width: 300, height: 600)
 
-    simulation.start(bounds: bounds, at: Date(), colorSource: ConstantColorSource(), using: &numberGenerator)
-    simulation.seek(to: targetTime, bounds: bounds)
+    simulation.start(area: bounds, at: Date(), colorSource: ConstantColorSource(), randomNumberGenerator: &numberGenerator)
+    simulation.seek(to: targetTime, area: bounds)
 
     let fixedDeltaTime = configuration.physics.fixedDeltaTime
     let expectedSteps = Int(min(targetTime, configuration.lifecycle.duration) / fixedDeltaTime)
@@ -879,8 +879,8 @@ func seekClampsOutOfRangeValues(input: Double, expectedMax: Double) {
     var numberGenerator: any RandomNumberGenerator = SeededRandomNumberGenerator(seed: 1)
     let bounds = CGSize(width: 300, height: 600)
 
-    simulation.start(bounds: bounds, at: Date(), colorSource: ConstantColorSource(), using: &numberGenerator)
-    simulation.seek(to: input, bounds: bounds)
+    simulation.start(area: bounds, at: Date(), colorSource: ConstantColorSource(), randomNumberGenerator: &numberGenerator)
+    simulation.seek(to: input, area: bounds)
 
     if input < 0 {
         #expect(simulation.currentTime >= 0, "負の入力は0以上にクランプされるべき")
