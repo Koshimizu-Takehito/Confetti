@@ -95,46 +95,6 @@ private extension [ParticleRenderState] {
     }
 }
 
-// MARK: - RGBAComponents
-
-/// RGBA color components.
-private struct RGBAComponents {
-    let red: CGFloat
-    let green: CGFloat
-    let blue: CGFloat
-    let alpha: CGFloat
-}
-
-// MARK: - Color Extension
-
-private extension Color {
-    /// Extracts RGBA components from the color.
-    var rgbaComponents: RGBAComponents {
-        #if canImport(UIKit)
-        let platformColor = UIColor(self)
-        #elseif canImport(AppKit)
-        let platformColor = NSColor(self)
-        #endif
-
-        var red: CGFloat = 0
-        var green: CGFloat = 0
-        var blue: CGFloat = 0
-        var alpha: CGFloat = 0
-
-        #if canImport(AppKit) && !targetEnvironment(macCatalyst)
-        if let srgbColor = platformColor.usingColorSpace(.sRGB) {
-            srgbColor.getRed(&red, green: &green, blue: &blue, alpha: &alpha)
-        } else {
-            platformColor.getRed(&red, green: &green, blue: &blue, alpha: &alpha)
-        }
-        #else
-        platformColor.getRed(&red, green: &green, blue: &blue, alpha: &alpha)
-        #endif
-
-        return RGBAComponents(red: red, green: green, blue: blue, alpha: alpha)
-    }
-}
-
 // MARK: - Previews
 
 #Preview {

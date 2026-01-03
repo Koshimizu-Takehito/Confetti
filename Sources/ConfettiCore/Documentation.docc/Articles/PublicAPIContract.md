@@ -24,18 +24,85 @@ The Confetti library follows Semantic Versioning:
 
 ### v2.0.0 Breaking Changes
 
-Starting from v2.0.0, `ConfettiSimulation` has been changed from a struct to an `@Observable` class:
+#### ConfettiSimulation: struct → @Observable class
+
+`ConfettiSimulation` has been changed from a struct to an `@Observable` class:
 
 - **Type change**: `struct` → `@MainActor @Observable public final class`
 - **Mutability**: Methods no longer require `mutating` keyword
 - **Thread safety**: Must be used from MainActor (enforced by `@MainActor`)
-- **State access**: `state` property is `public private(set)` (read-only from outside)
+- **State access**: `state` and `configuration` properties are `public private(set)` (read-only from outside)
 - **Observable integration**: State changes are automatically tracked by SwiftUI
 
 This change enables:
 - Direct observation of simulation state in SwiftUI
 - Single Source of Truth (SSoT) architecture in `ConfettiPlayer`
 - Elimination of state duplication and synchronization code
+
+#### ParticleRenderState: Color type change
+
+`ParticleRenderState.color` type has been changed to maintain UI-independence:
+
+- **Type change**: `SwiftUI.Color` → `CGColor`
+- **Reason**: Keep `ConfettiCore` UI-framework independent
+- **Impact**: Canvas rendering requires conversion: `Color(cgColor: state.color)`
+- **Module change**: `import SwiftUI` removed from `ParticleRenderState.swift`
+
+Migration example:
+```swift
+// Before (v1.x)
+Canvas { context, _ in
+    for state in player.renderStates {
+        context.fill(path, with: .color(state.color))  // state.color was SwiftUI.Color
+    }
+}
+
+// After (v2.0)
+Canvas { context, _ in
+    for state in player.simulation.renderStates {
+        context.fill(path, with: .color(Color(cgColor: state.color)))  // Convert CGColor → Color
+    }
+}
+```
+
+#### ConfettiRenderer: struct → class, moved to ConfettiCore
+
+`ConfettiRenderer` has been restructured for better architecture:
+
+- **Type change**: `public struct` → `public final class`
+- **Module change**: `ConfettiPlayback` → `ConfettiCore`
+- **Sendable removed**: `@MainActor` protection makes `Sendable` conformance unnecessary
+- **Mutability**: `mutating` keyword removed from methods (class methods)
+- **Re-export**: Still accessible via `ConfettiPlayback` (re-exported from `ConfettiCore`)
+
+Migration example:
+```swift
+// Before (v1.x)
+var renderer = ConfettiRenderer()
+let states = renderer.update(from: cloud)  // mutating method
+
+// After (v2.0)
+let renderer = ConfettiRenderer()
+let states = renderer.update(from: cloud)  // non-mutating method (class)
+```
+
+#### renderStates location change
+
+Render states are now provided by `ConfettiSimulation` as a computed property:
+
+- **Change**: `ConfettiPlayer.renderStates` → `ConfettiSimulation.renderStates`
+- **Access pattern**: `player.renderStates` → `player.simulation.renderStates`
+- **Implementation**: Computed property (automatically updates when `state.cloud` changes)
+- **SSoT benefit**: No manual synchronization needed
+
+Migration example:
+```swift
+// Before (v1.x)
+ConfettiCanvas(renderStates: player.renderStates)
+
+// After (v2.0)
+ConfettiCanvas(renderStates: player.simulation.renderStates)
+```
 
 ## Internal Domain Types
 

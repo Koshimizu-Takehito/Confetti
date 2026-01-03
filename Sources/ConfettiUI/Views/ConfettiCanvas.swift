@@ -11,7 +11,7 @@ import SwiftUI
 /// ## Example
 ///
 /// ```swift
-/// ConfettiCanvas(renderStates: player.renderStates)
+/// ConfettiCanvas(renderStates: player.simulation.renderStates)
 /// ```
 public struct ConfettiCanvas: View {
     // MARK: - Properties
@@ -32,7 +32,7 @@ public struct ConfettiCanvas: View {
         Canvas { context, _ in
             for state in renderStates {
                 context.opacity = state.opacity
-                context.fill(particlePath(for: state), with: .color(state.color))
+                context.fill(particlePath(for: state), with: .color(Color(cgColor: state.color)))
             }
         }
     }

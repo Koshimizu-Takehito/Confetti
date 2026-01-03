@@ -18,7 +18,7 @@ final class MetalDemoViewModel {
 
     /// The current render states for display.
     var renderStates: [ParticleRenderState] {
-        player.renderStates
+        player.simulation.renderStates
     }
 
     /// The canvas size for particle spawning.

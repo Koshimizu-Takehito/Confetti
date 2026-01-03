@@ -70,7 +70,7 @@ final class ConfettiDrawingView: NSView {
         let player = player
 
         withObservationTracking {
-            _ = player.renderStates
+            _ = player.simulation.renderStates
         } onChange: { [weak self] in
             Task { @MainActor [weak self] in
                 guard let self, isObserving else { return }
@@ -98,9 +98,7 @@ final class ConfettiDrawingView: NSView {
 
         context.clear(dirtyRect)
 
-        for state in player.renderStates {
-            guard let cgColor = state.color.cgColor else { continue }
-
+        for state in player.simulation.renderStates {
             context.saveGState()
             context.setAlpha(state.opacity)
 
@@ -109,7 +107,7 @@ final class ConfettiDrawingView: NSView {
             context.rotate(by: state.zRotation)
             context.translateBy(x: -center.x, y: -center.y)
 
-            context.setFillColor(cgColor)
+            context.setFillColor(state.color)
             context.fill(state.rect)
 
             context.restoreGState()

@@ -59,12 +59,19 @@ import Observation
 
     public private(set) var configuration: ConfettiConfig
     public private(set) var state: State
+    @ObservationIgnored private let renderer: ConfettiRenderer
 
     /// Total duration of the simulation
     public var duration: TimeInterval { configuration.lifecycle.duration }
 
     /// Current simulation time
     public var currentTime: TimeInterval { state.simulationTime }
+
+    /// Render states for Canvas drawing (computed from current cloud state)
+    public var renderStates: [ParticleRenderState] {
+        guard let cloud = state.cloud else { return [] }
+        return renderer.update(from: cloud)
+    }
 
     // MARK: - Initialization
 
@@ -75,6 +82,7 @@ import Observation
     public init(configuration: ConfettiConfig = .init()) {
         self.configuration = configuration.validated()
         self.state = .init()
+        self.renderer = ConfettiRenderer(initialCapacity: configuration.lifecycle.particleCount)
     }
 
     // MARK: - Lifecycle
@@ -108,6 +116,7 @@ import Observation
     /// Stops the simulation and resets the state.
     public func stop() {
         state = .init()
+        renderer.clear()
     }
 
     /// Pauses the simulation.

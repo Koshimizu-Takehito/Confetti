@@ -133,7 +133,7 @@ private struct AdvancedPlaybackDemo: View {
     var body: some View {
         VStack(spacing: 0) {
             // Confetti canvas
-            ConfettiCanvas(renderStates: player.renderStates)
+            ConfettiCanvas(renderStates: player.simulation.renderStates)
                 .onGeometryChange(for: CGSize.self, of: \.size) { _, size in
                     canvasSize = size
                     player.updateCanvasSize(to: size)

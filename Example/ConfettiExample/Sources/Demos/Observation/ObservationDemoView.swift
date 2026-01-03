@@ -44,7 +44,7 @@ struct ObservationDemoView: View {
         Canvas { context, _ in
             for state in viewModel.renderStates {
                 context.opacity = state.opacity
-                context.fill(Path(state: state), with: .color(state.color))
+                context.fill(Path(state: state), with: .color(Color(cgColor: state.color)))
             }
         }
         .overlay(alignment: .bottom) {

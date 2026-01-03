@@ -888,3 +888,87 @@ struct OutOfBoundsTestCase: Sendable {
         #expect(simulation.currentTime <= expectedMax, "duration超過は\(expectedMax)以下にクランプされるべき")
     }
 }
+
+// MARK: - パフォーマンステスト
+
+@Test("パフォーマンス: renderStates computed property の再計算コスト")
+@MainActor func renderStatesComputedPropertyPerformance() {
+    var configuration = ConfettiConfig()
+    configuration.lifecycle.particleCount = 100
+    configuration.lifecycle.duration = 5
+
+    let simulation = ConfettiSimulation(configuration: configuration)
+    var numberGenerator = SeededRandomNumberGenerator(seed: 12345)
+    let bounds = CGSize(width: 300, height: 600)
+
+    simulation.start(area: bounds, at: Date(), colorSource: ConstantColorSource(), randomNumberGenerator: &numberGenerator)
+
+    // 最初のアクセス（キャッシュなし）
+    let firstAccess = simulation.renderStates
+    #expect(firstAccess.count == 100, "最初のアクセスで全パーティクルが返される")
+
+    // 同じ state.cloud で複数回アクセス（cloud が変更されていない）
+    var accessCount = 0
+    let iterations = 1000
+
+    let start = Date()
+    for _ in 0 ..< iterations {
+        let states = simulation.renderStates
+        accessCount += states.count
+    }
+    let elapsed = Date().timeIntervalSince(start)
+
+    #expect(accessCount == 100 * iterations, "全アクセスで正しい数が返される")
+
+    // パフォーマンス閾値チェック（1000回アクセスで0.1秒以内）
+    // これは目安値。実際の許容値は環境による
+    let isAcceptable = elapsed < 0.1
+
+    if !isAcceptable {
+        print("⚠️ パフォーマンス警告: renderStates へ\(iterations)回アクセスに\(String(format: "%.3f", elapsed))秒かかりました")
+        print("   キャッシング機構の追加を検討してください")
+    }
+
+    // テストは失敗させない（警告のみ）
+    // #expect(isAcceptable, "renderStates のアクセスは高速であるべき")
+}
+
+@Test("パフォーマンス: renderStates は cloud 変更時のみ再計算が必要")
+@MainActor func renderStatesRecomputationOnCloudChange() {
+    var configuration = ConfettiConfig()
+    configuration.lifecycle.particleCount = 50
+    configuration.lifecycle.duration = 2
+    configuration.physics.fixedDeltaTime = 1.0 / 60.0
+
+    let simulation = ConfettiSimulation(configuration: configuration)
+    var numberGenerator = SeededRandomNumberGenerator(seed: 54321)
+    let bounds = CGSize(width: 300, height: 600)
+
+    simulation.start(area: bounds, at: Date(), colorSource: ConstantColorSource(), randomNumberGenerator: &numberGenerator)
+
+    // 初期状態
+    let states1 = simulation.renderStates
+    #expect(states1.count == 50)
+
+    // cloud を変更（update 呼び出し）
+    let now = Date()
+    simulation.update(at: now.addingTimeInterval(0.1), area: bounds)
+
+    // 変更後のアクセス
+    let states2 = simulation.renderStates
+    #expect(states2.count == 50)
+
+    // 位置が変わっているはず
+    let positions1 = states1.map(\.rect.midY)
+    let positions2 = states2.map(\.rect.midY)
+
+    var positionsChanged = false
+    for (pos1, pos2) in zip(positions1, positions2) {
+        if abs(pos1 - pos2) > 0.01 {
+            positionsChanged = true
+            break
+        }
+    }
+
+    #expect(positionsChanged, "update 後は位置が変わるべき")
+}

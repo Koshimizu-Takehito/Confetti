@@ -45,7 +45,7 @@ import SwiftUI
 /// @State var player = ConfettiPlayer()
 /// @State var canvasSize: CGSize = .zero
 ///
-/// ConfettiCanvas(renderStates: player.renderStates)
+/// ConfettiCanvas(renderStates: player.simulation.renderStates)
 ///     .onGeometryChange(for: CGSize.self, of: \.size) { _, size in
 ///         canvasSize = size
 ///         player.updateCanvasSize(to: size)
@@ -86,7 +86,7 @@ public struct ConfettiScreen<Trigger: View>: View {
 
     public var body: some View {
         GeometryReader { geometry in
-            ConfettiCanvas(renderStates: player.renderStates)
+            ConfettiCanvas(renderStates: player.simulation.renderStates)
                 .overlay(alignment: triggerAlignment) {
                     triggerBuilder(geometry.size) {
                         player.play(canvasSize: geometry.size)

@@ -269,7 +269,7 @@ struct ContentView: View {
 
     var body: some View {
         VStack {
-            ConfettiCanvas(renderStates: player.renderStates)
+            ConfettiCanvas(renderStates: player.simulation.renderStates)
                 .onGeometryChange(for: CGSize.self, of: \.size) { _, size in
                     canvasSize = size
                     player.updateCanvasSize(to: size)
@@ -342,7 +342,7 @@ class ConfettiView: UIView {
     override func draw(_ rect: CGRect) {
         guard let context = UIGraphicsGetCurrentContext() else { return }
         
-        for state in player.renderStates {
+        for state in player.simulation.renderStates {
             guard let cgColor = state.color.cgColor else { continue }
             
             context.saveGState()
@@ -393,7 +393,7 @@ class ConfettiView: NSView {
     override func draw(_ dirtyRect: NSRect) {
         guard let context = NSGraphicsContext.current?.cgContext else { return }
         
-        for state in player.renderStates {
+        for state in player.simulation.renderStates {
             guard let cgColor = state.color.cgColor else { continue }
             
             context.saveGState()

@@ -9,3 +9,6 @@
 
 // Re-export ConfettiColorSource protocol
 @_exported import protocol ConfettiCore.ConfettiColorSource
+
+// Re-export ParticleRenderState (now part of ConfettiCore)
+@_exported import struct ConfettiCore.ParticleRenderState
