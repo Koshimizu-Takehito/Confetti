@@ -151,10 +151,10 @@ private struct AdvancedPlaybackDemo: View {
 
     private var playbackInfo: some View {
         VStack(spacing: 8) {
-            Text("Time: \(player.currentTime, specifier: "%.2f") / \(player.duration, specifier: "%.1f")s")
+            Text("Time: \(player.simulation.currentTime, specifier: "%.2f") / \(player.simulation.duration, specifier: "%.1f")s")
                 .font(.headline.monospacedDigit())
 
-            ProgressView(value: player.currentTime, total: player.duration)
+            ProgressView(value: player.simulation.currentTime, total: player.simulation.duration)
                 .padding(.horizontal)
         }
         .padding(.vertical, 12)

@@ -24,7 +24,7 @@ struct PlaybackControls: View {
         VStack(spacing: tokens.spacing.medium) {
             TimeSlider(
                 currentTime: $displayTime.animation(),
-                duration: player.duration,
+                duration: player.simulation.duration,
                 onSeek: { player.seek(to: $0) },
                 onDragStart: handleSeekStart,
                 onDragEnd: handleSeekEnd
@@ -35,7 +35,7 @@ struct PlaybackControls: View {
                 controlButton(
                     systemName: "stop.fill",
                     action: { player.stop() },
-                    isEnabled: player.isRunning,
+                    isEnabled: player.simulation.state.isRunning,
                     accessibilityLabel: "Stop"
                 )
 
@@ -46,7 +46,7 @@ struct PlaybackControls: View {
                 controlButton(
                     systemName: "arrow.counterclockwise",
                     action: { player.play(canvasSize: canvasSize) },
-                    isEnabled: !player.isRunning,
+                    isEnabled: !player.simulation.state.isRunning,
                     accessibilityLabel: "Replay"
                 )
             }
@@ -55,9 +55,9 @@ struct PlaybackControls: View {
         .padding(.vertical, tokens.spacing.medium)
         .background(controlsBackground)
         .onAppear {
-            displayTime = player.currentTime
+            displayTime = player.simulation.currentTime
         }
-        .onChange(of: player.currentTime) { _, newTime in
+        .onChange(of: player.simulation.currentTime) { _, newTime in
             displayTime = newTime
         }
     }
@@ -66,7 +66,7 @@ struct PlaybackControls: View {
 
     @ViewBuilder
     private var playPauseButton: some View {
-        if !player.isRunning {
+        if !player.simulation.state.isRunning {
             // Not started - show play button
             controlButton(
                 systemName: "play.fill",
@@ -75,7 +75,7 @@ struct PlaybackControls: View {
                 isPrimary: true,
                 accessibilityLabel: "Play"
             )
-        } else if player.isPaused {
+        } else if player.simulation.state.isPaused {
             // Paused - show resume button
             controlButton(
                 systemName: "play.fill",
@@ -100,7 +100,7 @@ struct PlaybackControls: View {
 
     private func handleSeekStart() {
         // Pause playback during seek if currently playing
-        wasPlayingBeforeSeek = player.isRunning && !player.isPaused
+        wasPlayingBeforeSeek = player.simulation.state.isRunning && !player.simulation.state.isPaused
         if wasPlayingBeforeSeek {
             player.pause()
         }

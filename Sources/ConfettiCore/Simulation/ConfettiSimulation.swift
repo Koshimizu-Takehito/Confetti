@@ -1,5 +1,6 @@
 import CoreGraphics
 import Foundation
+import Observation
 
 // MARK: - ConfettiSimulation
 
@@ -7,7 +8,8 @@ import Foundation
 ///
 /// Handles particle creation, updates, and termination. UI-independent.
 /// Uses `ConfettiCloud` which separates immutable attributes (Traits) and mutable state (State).
-public struct ConfettiSimulation: Sendable {
+@MainActor
+@Observable public final class ConfettiSimulation {
     // MARK: - Rotation Dynamics Constants
 
     /// Coefficients for velocity-to-rotation effects
@@ -55,7 +57,7 @@ public struct ConfettiSimulation: Sendable {
 
     // MARK: - Properties
 
-    public var configuration: ConfettiConfig
+    public private(set) var configuration: ConfettiConfig
     public private(set) var state: State
 
     /// Total duration of the simulation
@@ -83,7 +85,7 @@ public struct ConfettiSimulation: Sendable {
     ///   - startTime: Start time
     ///   - colorSource: Color source
     ///   - randomNumberGenerator: Random number generator
-    public mutating func start(
+    public func start(
         area bounds: CGSize,
         at startTime: Date,
         colorSource: some ConfettiColorSource,
@@ -104,21 +106,21 @@ public struct ConfettiSimulation: Sendable {
     }
 
     /// Stops the simulation and resets the state.
-    public mutating func stop() {
+    public func stop() {
         state = .init()
     }
 
     /// Pauses the simulation.
     ///
     /// The simulation retains its current state and can be resumed with `resume(at:)`.
-    public mutating func pause() {
+    public func pause() {
         guard state.isRunning, !state.isPaused else { return }
         state.isPaused = true
     }
 
     /// Resumes a paused simulation.
     /// - Parameter currentTime: Current time (used to synchronize frame timing)
-    public mutating func resume(at currentTime: Date) {
+    public func resume(at currentTime: Date) {
         guard state.isRunning, state.isPaused else { return }
         state.isPaused = false
         state.lastUpdateTime = currentTime
@@ -131,7 +133,7 @@ public struct ConfettiSimulation: Sendable {
     /// - Parameters:
     ///   - time: Target simulation time (clamped to 0...duration)
     ///   - area: Size of the simulation area
-    public mutating func seek(to time: TimeInterval, area bounds: CGSize) {
+    public func seek(to time: TimeInterval, area bounds: CGSize) {
         guard state.isRunning, let initialCloud = state.initialCloud else { return }
 
         let targetTime = max(0, min(time, configuration.lifecycle.duration))
@@ -159,7 +161,7 @@ public struct ConfettiSimulation: Sendable {
     /// - Parameters:
     ///   - currentTime: Current time
     ///   - area: Size of the simulation area (used for out-of-bounds detection)
-    public mutating func update(at currentTime: Date, area bounds: CGSize) {
+    public func update(at currentTime: Date, area bounds: CGSize) {
         guard state.isPlaying else { return }
         guard let startTime = state.startTime else { return }
 
@@ -216,7 +218,7 @@ public struct ConfettiSimulation: Sendable {
 
     #if DEBUG
     /// For testing: Directly manipulate the Cloud.
-    public mutating func withCloudForTesting(_ body: (inout ConfettiCloud) -> Void) {
+    package func withCloudForTesting(_ body: (inout ConfettiCloud) -> Void) {
         guard var cloud = state.cloud else { return }
         body(&cloud)
         state.cloud = cloud
@@ -225,7 +227,7 @@ public struct ConfettiSimulation: Sendable {
 
     // MARK: - Private - Cloud Creation
 
-    private mutating func makeCloud(
+    private func makeCloud(
         origin: CGPoint,
         colorSource: some ConfettiColorSource,
         using numberGenerator: inout some RandomNumberGenerator
@@ -288,7 +290,7 @@ public struct ConfettiSimulation: Sendable {
 
     // MARK: - Private - Simulation Step
 
-    private mutating func step(deltaTime: TimeInterval, elapsed: TimeInterval, area bounds: CGSize) {
+    private func step(deltaTime: TimeInterval, elapsed: TimeInterval, area bounds: CGSize) {
         guard var cloud = state.cloud else { return }
 
         for index in 0 ..< cloud.aliveCount {

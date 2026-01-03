@@ -283,7 +283,7 @@ struct ContentView: View {
                 Button("Stop") { player.stop() }
             }
 
-            Text("Time: \(player.currentTime, specifier: "%.2f") / \(player.duration, specifier: "%.1f")s")
+            Text("Time: \(player.simulation.currentTime, specifier: "%.2f") / \(player.simulation.duration, specifier: "%.1f")s")
         }
     }
 }
@@ -331,7 +331,7 @@ class ConfettiView: UIView {
     }
     
     @objc private func handleDisplayLink() {
-        guard player.isRunning else {
+        guard player.simulation.state.isRunning else {
             displayLink?.invalidate()
             displayLink = nil
             return
@@ -382,7 +382,7 @@ class ConfettiView: NSView {
         
         // Start timer for frame updates
         timer = Timer.scheduledTimer(withTimeInterval: 1.0/120.0, repeats: true) { [weak self] _ in
-            guard self?.player.isRunning == true else {
+            guard self?.player.simulation.state.isRunning == true else {
                 self?.timer?.invalidate()
                 return
             }

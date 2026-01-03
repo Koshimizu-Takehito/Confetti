@@ -22,6 +22,21 @@ The Confetti library follows Semantic Versioning:
 - **Minor** releases: additive changes only (new APIs, new presets, new docs).
 - **Major** releases: breaking changes to the public API contract.
 
+### v2.0.0 Breaking Changes
+
+Starting from v2.0.0, `ConfettiSimulation` has been changed from a struct to an `@Observable` class:
+
+- **Type change**: `struct` → `@MainActor @Observable public final class`
+- **Mutability**: Methods no longer require `mutating` keyword
+- **Thread safety**: Must be used from MainActor (enforced by `@MainActor`)
+- **State access**: `state` property is `public private(set)` (read-only from outside)
+- **Observable integration**: State changes are automatically tracked by SwiftUI
+
+This change enables:
+- Direct observation of simulation state in SwiftUI
+- Single Source of Truth (SSoT) architecture in `ConfettiPlayer`
+- Elimination of state duplication and synchronization code
+
 ## Internal Domain Types
 
 The following types are **internal to ConfettiCore** but have stable contracts that `ConfettiPlayback` depends on:
@@ -68,6 +83,8 @@ To keep room for performance and feature evolution, the following are **not** pa
 
 ## Mutation rules
 
+- `ConfettiSimulation` must be used from `@MainActor` (enforced by the type annotation).
+- `ConfettiSimulation.state` is **read-only** from outside; use public methods (`start`, `pause`, `resume`, `seek`, `stop`) to mutate state.
 - `ConfettiRenderer` treats `ConfettiCloud` as **read-only** output of the simulation.
 - Do not mutate `cloud.states` unless you fully own the simulation loop and accept undefined behavior.
 - The `DEBUG`-only API `withCloudForTesting` exists **for tests** and is not meant for production rendering logic.

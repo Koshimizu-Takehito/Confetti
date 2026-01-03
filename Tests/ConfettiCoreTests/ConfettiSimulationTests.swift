@@ -23,12 +23,12 @@ private struct ConstantColorSource: ConfettiColorSource {
 // MARK: - ライフサイクルテスト
 
 @Test("start: 指定したパーティクル数が生成される")
-func startCreatesExpectedParticleCount() {
+@MainActor func startCreatesExpectedParticleCount() {
     var configuration = ConfettiConfig()
     configuration.lifecycle.particleCount = 10
     configuration.lifecycle.duration = 4
 
-    var simulation = ConfettiSimulation(configuration: configuration)
+    let simulation = ConfettiSimulation(configuration: configuration)
     var numberGenerator: any RandomNumberGenerator = SeededRandomNumberGenerator(seed: 1)
 
     simulation.start(
@@ -43,14 +43,14 @@ func startCreatesExpectedParticleCount() {
 }
 
 @Test("update: duration経過後にシミュレーションが停止する")
-func tickStopsAfterDuration() {
+@MainActor func tickStopsAfterDuration() {
     var configuration = ConfettiConfig()
     configuration.lifecycle.particleCount = 3
     configuration.lifecycle.duration = 0.1
     configuration.lifecycle.fadeOutDuration = 0.05
     configuration.physics.fixedDeltaTime = 1.0 / 60.0
 
-    var simulation = ConfettiSimulation(configuration: configuration)
+    let simulation = ConfettiSimulation(configuration: configuration)
     var numberGenerator: any RandomNumberGenerator = SeededRandomNumberGenerator(seed: 1)
     let bounds = CGSize(width: 300, height: 600)
     let startTime = Date(timeIntervalSince1970: 0)
@@ -68,11 +68,11 @@ func tickStopsAfterDuration() {
 }
 
 @Test("stop: 状態がクリアされる")
-func stopClearsState() {
+@MainActor func stopClearsState() {
     var configuration = ConfettiConfig()
     configuration.lifecycle.particleCount = 5
 
-    var simulation = ConfettiSimulation(configuration: configuration)
+    let simulation = ConfettiSimulation(configuration: configuration)
     var numberGenerator: any RandomNumberGenerator = SeededRandomNumberGenerator(seed: 1)
 
     simulation.start(
@@ -91,12 +91,12 @@ func stopClearsState() {
 // MARK: - 一時停止・再開テスト
 
 @Test("pause: シミュレーションの進行が停止する")
-func pauseStopsSimulationProgress() {
+@MainActor func pauseStopsSimulationProgress() {
     var configuration = ConfettiConfig()
     configuration.lifecycle.particleCount = 5
     configuration.lifecycle.duration = 3.0
 
-    var simulation = ConfettiSimulation(configuration: configuration)
+    let simulation = ConfettiSimulation(configuration: configuration)
     var numberGenerator: any RandomNumberGenerator = SeededRandomNumberGenerator(seed: 1)
     let bounds = CGSize(width: 300, height: 600)
     let startTime = Date(timeIntervalSince1970: 0)
@@ -118,12 +118,12 @@ func pauseStopsSimulationProgress() {
 }
 
 @Test("resume: 一時停止からシミュレーションが再開する")
-func resumeContinuesSimulation() {
+@MainActor func resumeContinuesSimulation() {
     var configuration = ConfettiConfig()
     configuration.lifecycle.particleCount = 5
     configuration.lifecycle.duration = 3.0
 
-    var simulation = ConfettiSimulation(configuration: configuration)
+    let simulation = ConfettiSimulation(configuration: configuration)
     var numberGenerator: any RandomNumberGenerator = SeededRandomNumberGenerator(seed: 1)
     let bounds = CGSize(width: 300, height: 600)
     let startTime = Date(timeIntervalSince1970: 0)
@@ -147,13 +147,13 @@ func resumeContinuesSimulation() {
 // MARK: - シークテスト
 
 @Test("seek: 指定した時刻にジャンプする")
-func seekJumpsToTargetTime() {
+@MainActor func seekJumpsToTargetTime() {
     var configuration = ConfettiConfig()
     configuration.lifecycle.particleCount = 5
     configuration.lifecycle.duration = 3.0
     configuration.physics.fixedDeltaTime = 1.0 / 60.0
 
-    var simulation = ConfettiSimulation(configuration: configuration)
+    let simulation = ConfettiSimulation(configuration: configuration)
     var numberGenerator: any RandomNumberGenerator = SeededRandomNumberGenerator(seed: 1)
     let bounds = CGSize(width: 300, height: 600)
     let startTime = Date(timeIntervalSince1970: 0)
@@ -169,13 +169,13 @@ func seekJumpsToTargetTime() {
 }
 
 @Test("seek: 範囲外の値は有効範囲にクランプされる")
-func seekClampsToValidRange() {
+@MainActor func seekClampsToValidRange() {
     var configuration = ConfettiConfig()
     configuration.lifecycle.particleCount = 5
     configuration.lifecycle.duration = 2.0
     configuration.physics.fixedDeltaTime = 1.0 / 60.0
 
-    var simulation = ConfettiSimulation(configuration: configuration)
+    let simulation = ConfettiSimulation(configuration: configuration)
     var numberGenerator: any RandomNumberGenerator = SeededRandomNumberGenerator(seed: 1)
     let bounds = CGSize(width: 300, height: 600)
     let startTime = Date(timeIntervalSince1970: 0)
@@ -190,13 +190,13 @@ func seekClampsToValidRange() {
 }
 
 @Test("seek: 初期状態が保持され再利用される")
-func seekPreservesInitialState() {
+@MainActor func seekPreservesInitialState() {
     var configuration = ConfettiConfig()
     configuration.lifecycle.particleCount = 5
     configuration.lifecycle.duration = 3.0
     configuration.physics.fixedDeltaTime = 1.0 / 60.0
 
-    var simulation = ConfettiSimulation(configuration: configuration)
+    let simulation = ConfettiSimulation(configuration: configuration)
     var numberGenerator: any RandomNumberGenerator = SeededRandomNumberGenerator(seed: 1)
     let bounds = CGSize(width: 300, height: 600)
     let startTime = Date(timeIntervalSince1970: 0)
@@ -213,7 +213,7 @@ func seekPreservesInitialState() {
 // MARK: - プロパティテスト
 
 @Test("duration: configurationの値と一致する")
-func durationMatchesConfiguration() {
+@MainActor func durationMatchesConfiguration() {
     var configuration = ConfettiConfig()
     configuration.lifecycle.duration = 5.0
 
@@ -222,11 +222,11 @@ func durationMatchesConfiguration() {
 }
 
 @Test("currentTime: 開始時は0である")
-func currentTimeStartsAtZero() {
+@MainActor func currentTimeStartsAtZero() {
     var configuration = ConfettiConfig()
     configuration.lifecycle.particleCount = 5
 
-    var simulation = ConfettiSimulation(configuration: configuration)
+    let simulation = ConfettiSimulation(configuration: configuration)
     var numberGenerator: any RandomNumberGenerator = SeededRandomNumberGenerator(seed: 1)
     let bounds = CGSize(width: 300, height: 600)
 
@@ -240,11 +240,11 @@ func currentTimeStartsAtZero() {
     "境界値: particleCount の様々な値でパーティクルが正しく生成される",
     arguments: [0, 1, 5, 100, 1000]
 )
-func particleCountCreatesExpectedParticles(count: Int) {
+@MainActor func particleCountCreatesExpectedParticles(count: Int) {
     var configuration = ConfettiConfig()
     configuration.lifecycle.particleCount = count
 
-    var simulation = ConfettiSimulation(configuration: configuration)
+    let simulation = ConfettiSimulation(configuration: configuration)
     var numberGenerator: any RandomNumberGenerator = SeededRandomNumberGenerator(seed: 1)
     let bounds = CGSize(width: 300, height: 600)
 
@@ -255,13 +255,13 @@ func particleCountCreatesExpectedParticles(count: Int) {
 }
 
 @Test("境界値: seek(0) で初期状態にリセットされる")
-func seekExactlyZeroResetsToInitialState() {
+@MainActor func seekExactlyZeroResetsToInitialState() {
     var configuration = ConfettiConfig()
     configuration.lifecycle.particleCount = 5
     configuration.lifecycle.duration = 3.0
     configuration.physics.fixedDeltaTime = 1.0 / 60.0
 
-    var simulation = ConfettiSimulation(configuration: configuration)
+    let simulation = ConfettiSimulation(configuration: configuration)
     var numberGenerator: any RandomNumberGenerator = SeededRandomNumberGenerator(seed: 1)
     let bounds = CGSize(width: 300, height: 600)
 
@@ -277,13 +277,13 @@ func seekExactlyZeroResetsToInitialState() {
 }
 
 @Test("境界値: seek(duration) で終了時刻に到達する")
-func seekExactlyDurationAdvancesToEnd() {
+@MainActor func seekExactlyDurationAdvancesToEnd() {
     var configuration = ConfettiConfig()
     configuration.lifecycle.particleCount = 5
     configuration.lifecycle.duration = 1.0
     configuration.physics.fixedDeltaTime = 1.0 / 60.0
 
-    var simulation = ConfettiSimulation(configuration: configuration)
+    let simulation = ConfettiSimulation(configuration: configuration)
     var numberGenerator: any RandomNumberGenerator = SeededRandomNumberGenerator(seed: 1)
     let bounds = CGSize(width: 300, height: 600)
 
@@ -297,14 +297,14 @@ func seekExactlyDurationAdvancesToEnd() {
 }
 
 @Test("境界値: 非常に小さいboundsでパーティクルがすぐに境界外に出る")
-func boundsVerySmallParticlesGoOutOfBoundsQuickly() {
+@MainActor func boundsVerySmallParticlesGoOutOfBoundsQuickly() {
     var configuration = ConfettiConfig()
     configuration.lifecycle.particleCount = 5
     configuration.lifecycle.duration = 10.0
     configuration.spawn.boundaryMargin = 0
     configuration.physics.fixedDeltaTime = 1.0 / 60.0
 
-    var simulation = ConfettiSimulation(configuration: configuration)
+    let simulation = ConfettiSimulation(configuration: configuration)
     var numberGenerator: any RandomNumberGenerator = SeededRandomNumberGenerator(seed: 1)
     let bounds = CGSize(width: 1, height: 1)
     let startTime = Date(timeIntervalSince1970: 0)
@@ -341,7 +341,7 @@ struct OutOfBoundsTestCase: Sendable {
     "境界外判定: パーティクル位置による削除判定",
     arguments: OutOfBoundsTestCase.cases
 )
-func outOfBoundsParticleRemoval(testCase: OutOfBoundsTestCase) {
+@MainActor func outOfBoundsParticleRemoval(testCase: OutOfBoundsTestCase) {
     var configuration = ConfettiConfig()
     configuration.lifecycle.particleCount = 1
     configuration.lifecycle.duration = 10
@@ -350,7 +350,7 @@ func outOfBoundsParticleRemoval(testCase: OutOfBoundsTestCase) {
     configuration.wind.forceRange = 0 ... 0
     configuration.physics.gravity = 0 // 重力も無効化
 
-    var simulation = ConfettiSimulation(configuration: configuration)
+    let simulation = ConfettiSimulation(configuration: configuration)
     var numberGenerator: any RandomNumberGenerator = SeededRandomNumberGenerator(seed: 1)
     let bounds = CGSize(width: 100, height: 100)
     let startTime = Date(timeIntervalSince1970: 0)
@@ -374,11 +374,11 @@ func outOfBoundsParticleRemoval(testCase: OutOfBoundsTestCase) {
 // MARK: - 状態遷移テスト
 
 @Test("状態遷移: stopped → running")
-func stateTransitionStoppedToRunning() {
+@MainActor func stateTransitionStoppedToRunning() {
     var configuration = ConfettiConfig()
     configuration.lifecycle.particleCount = 5
 
-    var simulation = ConfettiSimulation(configuration: configuration)
+    let simulation = ConfettiSimulation(configuration: configuration)
     var numberGenerator: any RandomNumberGenerator = SeededRandomNumberGenerator(seed: 1)
 
     #expect(!simulation.state.isRunning)
@@ -397,11 +397,11 @@ func stateTransitionStoppedToRunning() {
 }
 
 @Test("状態遷移: running → paused → running")
-func stateTransitionRunningToPausedToRunning() {
+@MainActor func stateTransitionRunningToPausedToRunning() {
     var configuration = ConfettiConfig()
     configuration.lifecycle.particleCount = 5
 
-    var simulation = ConfettiSimulation(configuration: configuration)
+    let simulation = ConfettiSimulation(configuration: configuration)
     var numberGenerator: any RandomNumberGenerator = SeededRandomNumberGenerator(seed: 1)
     let startTime = Date(timeIntervalSince1970: 0)
 
@@ -425,11 +425,11 @@ func stateTransitionRunningToPausedToRunning() {
 }
 
 @Test("状態遷移: paused → stopped")
-func stateTransitionPausedToStopped() {
+@MainActor func stateTransitionPausedToStopped() {
     var configuration = ConfettiConfig()
     configuration.lifecycle.particleCount = 5
 
-    var simulation = ConfettiSimulation(configuration: configuration)
+    let simulation = ConfettiSimulation(configuration: configuration)
     var numberGenerator: any RandomNumberGenerator = SeededRandomNumberGenerator(seed: 1)
 
     simulation.start(
@@ -448,11 +448,11 @@ func stateTransitionPausedToStopped() {
 }
 
 @Test("状態遷移: pause中のpauseは無視される")
-func stateTransitionPauseWhenAlreadyPausedNoChange() {
+@MainActor func stateTransitionPauseWhenAlreadyPausedNoChange() {
     var configuration = ConfettiConfig()
     configuration.lifecycle.particleCount = 5
 
-    var simulation = ConfettiSimulation(configuration: configuration)
+    let simulation = ConfettiSimulation(configuration: configuration)
     var numberGenerator: any RandomNumberGenerator = SeededRandomNumberGenerator(seed: 1)
 
     simulation.start(
@@ -470,11 +470,11 @@ func stateTransitionPauseWhenAlreadyPausedNoChange() {
 }
 
 @Test("状態遷移: pause中でないresumeは無視される")
-func stateTransitionResumeWhenNotPausedNoChange() {
+@MainActor func stateTransitionResumeWhenNotPausedNoChange() {
     var configuration = ConfettiConfig()
     configuration.lifecycle.particleCount = 5
 
-    var simulation = ConfettiSimulation(configuration: configuration)
+    let simulation = ConfettiSimulation(configuration: configuration)
     var numberGenerator: any RandomNumberGenerator = SeededRandomNumberGenerator(seed: 1)
 
     simulation.start(
@@ -491,8 +491,8 @@ func stateTransitionResumeWhenNotPausedNoChange() {
 }
 
 @Test("状態遷移: 未開始状態でのpauseは無視される")
-func stateTransitionPauseWhenNotRunningNoChange() {
-    var simulation = ConfettiSimulation(configuration: ConfettiConfig())
+@MainActor func stateTransitionPauseWhenNotRunningNoChange() {
+    let simulation = ConfettiSimulation(configuration: ConfettiConfig())
 
     #expect(!simulation.state.isRunning)
 
@@ -502,8 +502,8 @@ func stateTransitionPauseWhenNotRunningNoChange() {
 }
 
 @Test("状態遷移: 未開始状態でのresumeは無視される")
-func stateTransitionResumeWhenNotRunningNoChange() {
-    var simulation = ConfettiSimulation(configuration: ConfettiConfig())
+@MainActor func stateTransitionResumeWhenNotRunningNoChange() {
+    let simulation = ConfettiSimulation(configuration: ConfettiConfig())
 
     #expect(!simulation.state.isRunning)
 
@@ -515,12 +515,12 @@ func stateTransitionResumeWhenNotRunningNoChange() {
 // MARK: - エラー推測・エッジケーステスト
 
 @Test("エッジケース: 最小のfixedDeltaTimeでシミュレーションが正常動作する")
-func tickWithMinimumFixedDeltaTimeWorksNormally() {
+@MainActor func tickWithMinimumFixedDeltaTimeWorksNormally() {
     var configuration = ConfettiConfig()
     configuration.lifecycle.particleCount = 5
     configuration.physics.fixedDeltaTime = 1.0 / 240.0 // Minimum valid value
 
-    var simulation = ConfettiSimulation(configuration: configuration)
+    let simulation = ConfettiSimulation(configuration: configuration)
     var numberGenerator: any RandomNumberGenerator = SeededRandomNumberGenerator(seed: 1)
     let startTime = Date(timeIntervalSince1970: 0)
     let bounds = CGSize(width: 300, height: 600)
@@ -533,12 +533,12 @@ func tickWithMinimumFixedDeltaTimeWorksNormally() {
 }
 
 @Test("エッジケース: 同一時刻でupdateしても進まない")
-func tickWithSameTimeDoesNotAdvance() {
+@MainActor func tickWithSameTimeDoesNotAdvance() {
     var configuration = ConfettiConfig()
     configuration.lifecycle.particleCount = 5
     configuration.physics.fixedDeltaTime = 1.0 / 60.0
 
-    var simulation = ConfettiSimulation(configuration: configuration)
+    let simulation = ConfettiSimulation(configuration: configuration)
     var numberGenerator: any RandomNumberGenerator = SeededRandomNumberGenerator(seed: 1)
     let startTime = Date(timeIntervalSince1970: 0)
     let bounds = CGSize(width: 300, height: 600)
@@ -550,13 +550,13 @@ func tickWithSameTimeDoesNotAdvance() {
 }
 
 @Test("エッジケース: 大きな時間ジャンプはステップ数が制限される")
-func tickWithLargeTimeJumpLimitsStepsPerTick() {
+@MainActor func tickWithLargeTimeJumpLimitsStepsPerTick() {
     var configuration = ConfettiConfig()
     configuration.lifecycle.particleCount = 5
     configuration.lifecycle.duration = 10.0
     configuration.physics.fixedDeltaTime = 1.0 / 60.0
 
-    var simulation = ConfettiSimulation(configuration: configuration)
+    let simulation = ConfettiSimulation(configuration: configuration)
     var numberGenerator: any RandomNumberGenerator = SeededRandomNumberGenerator(seed: 1)
     let startTime = Date(timeIntervalSince1970: 0)
     let bounds = CGSize(width: 300, height: 600)
@@ -569,8 +569,8 @@ func tickWithLargeTimeJumpLimitsStepsPerTick() {
 }
 
 @Test("エッジケース: 開始前のupdateは無視される")
-func tickBeforeStartNoChange() {
-    var simulation = ConfettiSimulation(configuration: ConfettiConfig())
+@MainActor func tickBeforeStartNoChange() {
+    let simulation = ConfettiSimulation(configuration: ConfettiConfig())
     let bounds = CGSize(width: 300, height: 600)
 
     simulation.update(at: Date(), area: bounds)
@@ -580,8 +580,8 @@ func tickBeforeStartNoChange() {
 }
 
 @Test("エッジケース: 開始前のseekは無視される")
-func seekBeforeStartNoChange() {
-    var simulation = ConfettiSimulation(configuration: ConfettiConfig())
+@MainActor func seekBeforeStartNoChange() {
+    let simulation = ConfettiSimulation(configuration: ConfettiConfig())
     let bounds = CGSize(width: 300, height: 600)
 
     simulation.seek(to: 1.0, area: bounds)
@@ -591,12 +591,12 @@ func seekBeforeStartNoChange() {
 }
 
 @Test("エッジケース: 複数回のstartで状態がリセットされる")
-func multipleStartsResetsState() {
+@MainActor func multipleStartsResetsState() {
     var configuration = ConfettiConfig()
     configuration.lifecycle.particleCount = 5
     configuration.physics.fixedDeltaTime = 1.0 / 60.0
 
-    var simulation = ConfettiSimulation(configuration: configuration)
+    let simulation = ConfettiSimulation(configuration: configuration)
     var numberGenerator: any RandomNumberGenerator = SeededRandomNumberGenerator(seed: 1)
     let bounds = CGSize(width: 300, height: 600)
     let startTime = Date(timeIntervalSince1970: 0)
@@ -614,7 +614,7 @@ func multipleStartsResetsState() {
 // MARK: - 決定論性テスト
 
 @Test("決定論性: 同じシードで同じ結果になる")
-func determinismSameSeedProducesSameResults() {
+@MainActor func determinismSameSeedProducesSameResults() {
     var configuration = ConfettiConfig()
     configuration.lifecycle.particleCount = 10
     configuration.physics.fixedDeltaTime = 1.0 / 60.0
@@ -622,13 +622,13 @@ func determinismSameSeedProducesSameResults() {
     let bounds = CGSize(width: 300, height: 600)
     let startTime = Date(timeIntervalSince1970: 0)
 
-    var simulation1 = ConfettiSimulation(configuration: configuration)
+    let simulation1 = ConfettiSimulation(configuration: configuration)
     var rng1: any RandomNumberGenerator = SeededRandomNumberGenerator(seed: 42)
     simulation1.start(area: bounds, at: startTime, colorSource: ConstantColorSource(), randomNumberGenerator: &rng1)
     simulation1.update(at: startTime.addingTimeInterval(0.1), area: bounds)
     let positions1 = simulation1.state.cloud?.states.map(\.position)
 
-    var simulation2 = ConfettiSimulation(configuration: configuration)
+    let simulation2 = ConfettiSimulation(configuration: configuration)
     var rng2: any RandomNumberGenerator = SeededRandomNumberGenerator(seed: 42)
     simulation2.start(area: bounds, at: startTime, colorSource: ConstantColorSource(), randomNumberGenerator: &rng2)
     simulation2.update(at: startTime.addingTimeInterval(0.1), area: bounds)
@@ -638,19 +638,19 @@ func determinismSameSeedProducesSameResults() {
 }
 
 @Test("決定論性: 異なるシードで異なる結果になる")
-func determinismDifferentSeedsProduceDifferentResults() {
+@MainActor func determinismDifferentSeedsProduceDifferentResults() {
     var configuration = ConfettiConfig()
     configuration.lifecycle.particleCount = 10
 
     let bounds = CGSize(width: 300, height: 600)
     let startTime = Date(timeIntervalSince1970: 0)
 
-    var simulation1 = ConfettiSimulation(configuration: configuration)
+    let simulation1 = ConfettiSimulation(configuration: configuration)
     var rng1: any RandomNumberGenerator = SeededRandomNumberGenerator(seed: 1)
     simulation1.start(area: bounds, at: startTime, colorSource: ConstantColorSource(), randomNumberGenerator: &rng1)
     let velocities1 = simulation1.state.cloud?.states.map(\.velocity)
 
-    var simulation2 = ConfettiSimulation(configuration: configuration)
+    let simulation2 = ConfettiSimulation(configuration: configuration)
     var rng2: any RandomNumberGenerator = SeededRandomNumberGenerator(seed: 2)
     simulation2.start(area: bounds, at: startTime, colorSource: ConstantColorSource(), randomNumberGenerator: &rng2)
     let velocities2 = simulation2.state.cloud?.states.map(\.velocity)
@@ -659,7 +659,7 @@ func determinismDifferentSeedsProduceDifferentResults() {
 }
 
 @Test("決定論性: seekが決定論的である")
-func seekIsDeterministic() {
+@MainActor func seekIsDeterministic() {
     var configuration = ConfettiConfig()
     configuration.lifecycle.particleCount = 10
     configuration.physics.fixedDeltaTime = 1.0 / 60.0
@@ -667,7 +667,7 @@ func seekIsDeterministic() {
     let bounds = CGSize(width: 300, height: 600)
     let startTime = Date(timeIntervalSince1970: 0)
 
-    var simulation = ConfettiSimulation(configuration: configuration)
+    let simulation = ConfettiSimulation(configuration: configuration)
     var rng: any RandomNumberGenerator = SeededRandomNumberGenerator(seed: 42)
     simulation.start(area: bounds, at: startTime, colorSource: ConstantColorSource(), randomNumberGenerator: &rng)
     simulation.seek(to: 1.0, area: bounds)
@@ -683,7 +683,7 @@ func seekIsDeterministic() {
 // MARK: - ホワイトボックステスト（物理演算分岐カバレッジ）
 
 @Test("物理演算: 重力によりパーティクルが下方向に加速する")
-func physicsGravityAcceleratesDownward() {
+@MainActor func physicsGravityAcceleratesDownward() {
     var configuration = ConfettiConfig()
     configuration.lifecycle.particleCount = 1
     configuration.lifecycle.duration = 10.0
@@ -692,7 +692,7 @@ func physicsGravityAcceleratesDownward() {
     configuration.physics.drag = 1.0 // ドラッグなし
     configuration.wind.forceRange = 0 ... 0
 
-    var simulation = ConfettiSimulation(configuration: configuration)
+    let simulation = ConfettiSimulation(configuration: configuration)
     var numberGenerator: any RandomNumberGenerator = SeededRandomNumberGenerator(seed: 1)
     let bounds = CGSize(width: 300, height: 600)
     let startTime = Date(timeIntervalSince1970: 0)
@@ -722,7 +722,7 @@ func physicsGravityAcceleratesDownward() {
 }
 
 @Test("物理演算: ドラッグにより速度が減衰する")
-func physicsDragDeceleratesVelocity() {
+@MainActor func physicsDragDeceleratesVelocity() {
     var configuration = ConfettiConfig()
     configuration.lifecycle.particleCount = 1
     configuration.lifecycle.duration = 10.0
@@ -731,7 +731,7 @@ func physicsDragDeceleratesVelocity() {
     configuration.physics.drag = 0.9 // 10%減衰
     configuration.wind.forceRange = 0 ... 0
 
-    var simulation = ConfettiSimulation(configuration: configuration)
+    let simulation = ConfettiSimulation(configuration: configuration)
     var numberGenerator: any RandomNumberGenerator = SeededRandomNumberGenerator(seed: 1)
     let bounds = CGSize(width: 300, height: 600)
     let startTime = Date(timeIntervalSince1970: 0)
@@ -756,7 +756,7 @@ func physicsDragDeceleratesVelocity() {
 }
 
 @Test("物理演算: 終端速度を超えない")
-func physicsTerminalVelocityNotExceeded() {
+@MainActor func physicsTerminalVelocityNotExceeded() {
     var configuration = ConfettiConfig()
     configuration.lifecycle.particleCount = 1
     configuration.lifecycle.duration = 10.0
@@ -766,7 +766,7 @@ func physicsTerminalVelocityNotExceeded() {
     configuration.physics.drag = 1.0
     configuration.wind.forceRange = 0 ... 0
 
-    var simulation = ConfettiSimulation(configuration: configuration)
+    let simulation = ConfettiSimulation(configuration: configuration)
     var numberGenerator: any RandomNumberGenerator = SeededRandomNumberGenerator(seed: 1)
     let bounds = CGSize(width: 300, height: 10000)
     let startTime = Date(timeIntervalSince1970: 0)
@@ -795,7 +795,7 @@ func physicsTerminalVelocityNotExceeded() {
 // MARK: - ブラックボックステスト（追加仕様）
 
 @Test("フェードアウト: duration終了間際にopacityが減少する")
-func fadeOutReducesOpacityNearEnd() {
+@MainActor func fadeOutReducesOpacityNearEnd() {
     var configuration = ConfettiConfig()
     configuration.lifecycle.particleCount = 1
     configuration.lifecycle.duration = 2.0
@@ -804,7 +804,7 @@ func fadeOutReducesOpacityNearEnd() {
     configuration.physics.gravity = 0
     configuration.wind.forceRange = 0 ... 0
 
-    var simulation = ConfettiSimulation(configuration: configuration)
+    let simulation = ConfettiSimulation(configuration: configuration)
     var numberGenerator: any RandomNumberGenerator = SeededRandomNumberGenerator(seed: 1)
     let bounds = CGSize(width: 300, height: 600)
     let startTime = Date(timeIntervalSince1970: 0)
@@ -831,13 +831,13 @@ func fadeOutReducesOpacityNearEnd() {
 }
 
 @Test("シーク: 様々な時刻へのシークが正しく動作する", arguments: [0.0, 0.5, 1.0, 1.5, 2.0])
-func seekToVariousTimes(targetTime: Double) {
+@MainActor func seekToVariousTimes(targetTime: Double) {
     var configuration = ConfettiConfig()
     configuration.lifecycle.particleCount = 5
     configuration.lifecycle.duration = 3.0
     configuration.physics.fixedDeltaTime = 1.0 / 60.0
 
-    var simulation = ConfettiSimulation(configuration: configuration)
+    let simulation = ConfettiSimulation(configuration: configuration)
     var numberGenerator: any RandomNumberGenerator = SeededRandomNumberGenerator(seed: 1)
     let bounds = CGSize(width: 300, height: 600)
 
@@ -852,7 +852,7 @@ func seekToVariousTimes(targetTime: Double) {
 }
 
 @Test("duration: 様々なduration値が正しく動作する", arguments: [1.0, 2.0, 3.0, 5.0, 10.0])
-func durationVariousValues(duration: Double) {
+@MainActor func durationVariousValues(duration: Double) {
     var configuration = ConfettiConfig()
     configuration.lifecycle.duration = duration
     // Ensure fadeOutDuration doesn't exceed duration
@@ -869,13 +869,13 @@ func durationVariousValues(duration: Double) {
     "seek: 範囲外の値がクランプされる",
     arguments: [(-10.0, 0.0), (-1.0, 0.0), (5.0, 2.0), (100.0, 2.0)]
 )
-func seekClampsOutOfRangeValues(input: Double, expectedMax: Double) {
+@MainActor func seekClampsOutOfRangeValues(input: Double, expectedMax: Double) {
     var configuration = ConfettiConfig()
     configuration.lifecycle.particleCount = 5
     configuration.lifecycle.duration = 2.0
     configuration.physics.fixedDeltaTime = 1.0 / 60.0
 
-    var simulation = ConfettiSimulation(configuration: configuration)
+    let simulation = ConfettiSimulation(configuration: configuration)
     var numberGenerator: any RandomNumberGenerator = SeededRandomNumberGenerator(seed: 1)
     let bounds = CGSize(width: 300, height: 600)
 

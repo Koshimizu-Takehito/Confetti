@@ -39,16 +39,10 @@ import Observation
     // MARK: - Published State
 
     public private(set) var renderStates: [ParticleRenderState] = []
-    public private(set) var isRunning: Bool = false
-    public private(set) var isPaused: Bool = false
-    public private(set) var currentTime: TimeInterval = 0
-
-    /// Total duration of the playback
-    public var duration: TimeInterval { simulation.duration }
 
     // MARK: - Dependencies
 
-    @ObservationIgnored private var simulation: ConfettiSimulation
+    public let simulation: ConfettiSimulation
     @ObservationIgnored private var renderer: ConfettiRenderer
     @ObservationIgnored private var colorSource: any ConfettiColorSource
     @ObservationIgnored private var numberGenerator: any RandomNumberGenerator & Sendable
@@ -82,7 +76,7 @@ import Observation
     public func play(canvasSize size: CGSize) {
         canvasSize = size
         simulation.start(area: size, at: .now, colorSource: colorSource, randomNumberGenerator: &numberGenerator)
-        syncState()
+        syncRenderStates()
         startDisplayLink()
     }
 
@@ -92,14 +86,14 @@ import Observation
     public func pause() {
         simulation.pause()
         displayLinkDriver.stop()
-        syncState()
+        syncRenderStates()
     }
 
     /// Resumes a paused playback.
     public func resume() {
         guard simulation.state.isPaused else { return }
         simulation.resume(at: .now)
-        syncState()
+        syncRenderStates()
         startDisplayLink()
     }
 
@@ -107,14 +101,14 @@ import Observation
     /// - Parameter time: Target time (clamped to 0...duration)
     public func seek(to time: TimeInterval) {
         simulation.seek(to: time, area: canvasSize)
-        syncState()
+        syncRenderStates()
     }
 
     /// Stops the playback and resets the state.
     public func stop() {
         displayLinkDriver.stop()
         simulation.stop()
-        syncState()
+        syncRenderStates()
     }
 
     /// Notifies canvas size changes.
@@ -132,19 +126,15 @@ import Observation
     }
 
     private func tick(at date: Date) {
-        guard simulation.state.isPlaying else {
+        if simulation.state.isPlaying {
+            simulation.update(at: date, area: canvasSize)
+        } else {
             displayLinkDriver.stop()
-            syncState()
-            return
         }
-        simulation.update(at: date, area: canvasSize)
-        syncState()
+        syncRenderStates()
     }
 
-    private func syncState() {
-        isRunning = simulation.state.isRunning
-        isPaused = simulation.state.isPaused
-        currentTime = simulation.currentTime
+    private func syncRenderStates() {
         if let cloud = simulation.state.cloud {
             renderStates = renderer.update(from: cloud)
         } else {
