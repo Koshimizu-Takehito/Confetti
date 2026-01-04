@@ -66,7 +66,7 @@ final class ConfettiDrawingView: UIView {
         let player = player
 
         withObservationTracking {
-            _ = player.simulation.renderStates
+            _ = player.renderStates
         } onChange: { [weak self] in
             Task { @MainActor [weak self] in
                 guard let self, isObserving else { return }
@@ -92,7 +92,7 @@ final class ConfettiDrawingView: UIView {
     override func draw(_: CGRect) {
         guard let context = UIGraphicsGetCurrentContext() else { return }
 
-        for state in player.simulation.renderStates {
+        for state in player.renderStates {
             context.saveGState()
             context.setAlpha(state.opacity)
 

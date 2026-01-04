@@ -79,7 +79,7 @@ struct ContentView: View {
 
     var body: some View {
         VStack {
-            ConfettiCanvas(renderStates: player.simulation.renderStates)
+            ConfettiCanvas(renderStates: player.renderStates)
                 .onGeometryChange(for: CGSize.self, of: \.size) { _, size in
                     canvasSize = size
                     player.updateCanvasSize(to: size)

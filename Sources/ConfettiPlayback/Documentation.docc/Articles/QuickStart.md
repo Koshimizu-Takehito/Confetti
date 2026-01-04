@@ -14,7 +14,7 @@ let player = ConfettiPlayer()
 player.play(canvasSize: CGSize(width: 300, height: 600))
 
 // Access render states for custom rendering
-for state in player.simulation.renderStates {
+for state in player.renderStates {
     // state.rect: CGRect - particle bounds
     // state.color: Color - fill color (dynamic)
     // state.opacity: Double - opacity (0-1)
@@ -68,7 +68,7 @@ let player = ConfettiPlayer(colorSource: BrandColors())
 
 ## With SpriteKit / Metal
 
-For SpriteKit or Metal integration, access `player.simulation.renderStates` and convert to your rendering system:
+For SpriteKit or Metal integration, access `player.renderStates` and convert to your rendering system:
 
 ```swift
 import ConfettiPlayback
@@ -84,7 +84,7 @@ class GameScene: SKScene {
     }
     
     func updateParticles() {
-        for (index, state) in player.simulation.renderStates.enumerated() {
+        for (index, state) in player.renderStates.enumerated() {
             // Node pooling: reuse existing nodes or create new ones
             let node = getOrCreateNode(at: index)
             

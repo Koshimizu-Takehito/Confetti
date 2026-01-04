@@ -11,7 +11,7 @@ import SwiftUI
 /// ## Example
 ///
 /// ```swift
-/// ConfettiCanvas(renderStates: player.simulation.renderStates)
+/// ConfettiCanvas(renderStates: player.renderStates)
 /// ```
 public struct ConfettiCanvas: View {
     // MARK: - Properties

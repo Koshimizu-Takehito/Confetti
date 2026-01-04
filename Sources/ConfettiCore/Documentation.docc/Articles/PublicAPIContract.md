@@ -59,7 +59,7 @@ Canvas { context, _ in
 
 // After (v2.0)
 Canvas { context, _ in
-    for state in player.simulation.renderStates {
+    for state in player.renderStates {
         context.fill(path, with: .color(Color(cgColor: state.color)))  // Convert CGColor → Color
     }
 }
@@ -86,12 +86,13 @@ let renderer = ConfettiRenderer()
 let states = renderer.update(from: cloud)  // non-mutating method (class)
 ```
 
-#### renderStates location change
+#### renderStates implementation change
 
-Render states are now provided by `ConfettiSimulation` as a computed property:
+Render states remain accessible via `ConfettiPlayer.renderStates`, maintaining API compatibility:
 
-- **Change**: `ConfettiPlayer.renderStates` → `ConfettiSimulation.renderStates`
-- **Access pattern**: `player.renderStates` → `player.simulation.renderStates`
+- **API surface**: `player.renderStates` (unchanged from v1.x)
+- **Internal architecture**: Computed property forwarding to internal `ConfettiSimulation`
+- **Encapsulation**: `ConfettiSimulation` is private, preventing external state manipulation
 - **Implementation**: Cached computed property (recomputes only when cloud changes)
 - **SSoT benefit**: No manual synchronization needed
 - **Performance**: Version-based cache invalidation provides ~180x speedup for repeated access
@@ -102,7 +103,7 @@ Migration example:
 ConfettiCanvas(renderStates: player.renderStates)
 
 // After (v2.0)
-ConfettiCanvas(renderStates: player.simulation.renderStates)
+ConfettiCanvas(renderStates: player.renderStates)  // Same API, better architecture
 ```
 
 ##### Caching mechanism

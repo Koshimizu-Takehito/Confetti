@@ -269,7 +269,7 @@ struct ContentView: View {
 
     var body: some View {
         VStack {
-            ConfettiCanvas(renderStates: player.simulation.renderStates)
+            ConfettiCanvas(renderStates: player.renderStates)
                 .onGeometryChange(for: CGSize.self, of: \.size) { _, size in
                     canvasSize = size
                     player.updateCanvasSize(to: size)
@@ -283,7 +283,7 @@ struct ContentView: View {
                 Button("Stop") { player.stop() }
             }
 
-            Text("Time: \(player.simulation.currentTime, specifier: "%.2f") / \(player.simulation.duration, specifier: "%.1f")s")
+            Text("Time: \(player.currentTime, specifier: "%.2f") / \(player.duration, specifier: "%.1f")s")
         }
     }
 }
@@ -331,7 +331,7 @@ class ConfettiView: UIView {
     }
     
     @objc private func handleDisplayLink() {
-        guard player.simulation.state.isRunning else {
+        guard player.state.isRunning else {
             displayLink?.invalidate()
             displayLink = nil
             return
@@ -342,7 +342,7 @@ class ConfettiView: UIView {
     override func draw(_ rect: CGRect) {
         guard let context = UIGraphicsGetCurrentContext() else { return }
         
-        for state in player.simulation.renderStates {
+        for state in player.renderStates {
             guard let cgColor = state.color.cgColor else { continue }
             
             context.saveGState()
@@ -382,7 +382,7 @@ class ConfettiView: NSView {
         
         // Start timer for frame updates
         timer = Timer.scheduledTimer(withTimeInterval: 1.0/120.0, repeats: true) { [weak self] _ in
-            guard self?.player.simulation.state.isRunning == true else {
+            guard self?.player.state.isRunning == true else {
                 self?.timer?.invalidate()
                 return
             }
@@ -393,7 +393,7 @@ class ConfettiView: NSView {
     override func draw(_ dirtyRect: NSRect) {
         guard let context = NSGraphicsContext.current?.cgContext else { return }
         
-        for state in player.simulation.renderStates {
+        for state in player.renderStates {
             guard let cgColor = state.color.cgColor else { continue }
             
             context.saveGState()
