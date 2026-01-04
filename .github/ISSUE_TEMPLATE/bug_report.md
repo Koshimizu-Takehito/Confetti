@@ -45,7 +45,7 @@ Describe what actually happened. Include any error messages or unexpected visual
 
 **Environment**
 
-- Confetti version: [e.g. 1.0.0]
+- Confetti version: [e.g. 2.0.0]
 - Swift version: [e.g. 6.0] (`swift --version`)
 - Xcode version: [e.g. 16.0]
 - Platform: [e.g. iOS 18, macOS 15]

@@ -53,7 +53,7 @@ Add **Confetti** as a dependency in your `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/Koshimizu-Takehito/Confetti.git", from: "1.0.0")
+    .package(url: "https://github.com/Koshimizu-Takehito/Confetti.git", from: "2.0.0")
 ]
 ```
 
@@ -72,7 +72,7 @@ Then add it to your target:
 
 1. File → Add Package Dependencies...
 2. Enter: `https://github.com/Koshimizu-Takehito/Confetti.git`
-3. Select version: `1.0.0` or later
+3. Select version: `2.0.0` or later
 
 ---
 
