@@ -22,6 +22,18 @@ public extension CGVector {
         CGPoint(x: dx, y: dy)
     }
 
+    // MARK: - Geometric Operations
+
+    /// Returns a new vector with dx and dy components swapped.
+    var swapped: CGVector {
+        CGVector(dx: dy, dy: dx)
+    }
+
+    /// Component-wise multiplication (Hadamard product).
+    func hadamard(_ other: CGVector) -> CGVector {
+        CGVector(dx: dx * other.dx, dy: dy * other.dy)
+    }
+
     // MARK: - Arithmetic Operators
 
     /// Adds two vectors component-wise.

@@ -333,6 +333,39 @@ struct CGVectorArithmeticTests {
         #expect(delta.x == 5.0) // 10 * 0.5
         #expect(delta.y == -2.5) // -5 * 0.5
     }
+
+    // MARK: - Geometric Operations
+
+    @Test("幾何演算: ベクトルの成分を入れ替え")
+    func vectorSwapped() {
+        let vector = CGVector(dx: 3.0, dy: 7.0)
+        let swapped = vector.swapped
+
+        #expect(swapped.dx == 7.0)
+        #expect(swapped.dy == 3.0)
+    }
+
+    @Test("幾何演算: 成分ごとの乗算 (Hadamard積)")
+    func vectorHadamardProduct() {
+        let v1 = CGVector(dx: 2.0, dy: 3.0)
+        let v2 = CGVector(dx: 4.0, dy: 5.0)
+        let result = v1.hadamard(v2)
+
+        #expect(result.dx == 8.0) // 2 * 4
+        #expect(result.dy == 15.0) // 3 * 5
+    }
+
+    @Test("幾何演算: 回転計算での速度効果")
+    func vectorRotationEffect() {
+        let velocity = CGVector(dx: 10.0, dy: 20.0)
+        let rotationCoeff = CGVector(dx: 0.01, dy: 0.008)
+
+        // Velocity influence (swapped and component-wise)
+        let effect = velocity.swapped.hadamard(rotationCoeff)
+
+        #expect(effect.dx == 0.2) // 20 * 0.01
+        #expect(effect.dy == 0.08) // 10 * 0.008
+    }
 }
 
 // MARK: - CGPointArithmeticTests
@@ -573,5 +606,147 @@ struct CGPointArithmeticTests {
 
         #expect(result.x == 30.0) // 0 + (100-0)*0.3
         #expect(result.y == 60.0) // 0 + (200-0)*0.3
+    }
+}
+
+// MARK: - CGRectUtilitiesTests
+
+@Suite("CGRect Utility Extensions")
+struct CGRectUtilitiesTests {
+    @Test("境界判定: マージンなしで矩形内のポイント")
+    func containsPointWithoutMargin() {
+        let rect = CGRect(x: 0, y: 0, width: 100, height: 100)
+        let point = CGPoint(x: 50, y: 50)
+
+        #expect(rect.contains(point, margin: 0))
+    }
+
+    @Test("境界判定: 正のマージンで拡張された矩形")
+    func containsPointWithPositiveMargin() {
+        let rect = CGRect(x: 0, y: 0, width: 100, height: 100)
+        let point = CGPoint(x: -5, y: 50) // Outside without margin
+
+        #expect(rect.contains(point, margin: 10)) // Inside with margin
+    }
+
+    @Test("境界判定: 負のマージンで縮小された矩形")
+    func containsPointWithNegativeMargin() {
+        let rect = CGRect(x: 0, y: 0, width: 100, height: 100)
+        let point = CGPoint(x: 5, y: 5) // Inside without margin
+
+        #expect(!rect.contains(point, margin: -10)) // Outside with negative margin
+    }
+
+    @Test("境界判定: 矩形外のポイント")
+    func pointOutsideRectangle() {
+        let rect = CGRect(x: 0, y: 0, width: 100, height: 100)
+        let point = CGPoint(x: 150, y: 50)
+
+        #expect(!rect.contains(point, margin: 0))
+        #expect(!rect.contains(point, margin: 10))
+    }
+
+    @Test("境界判定: 境界上のポイント")
+    func pointOnBoundary() {
+        let rect = CGRect(x: 0, y: 0, width: 100, height: 100)
+        let point = CGPoint(x: 100, y: 100) // Exactly on max boundary (exclusive, so outside)
+
+        // CGRect treats max bounds as exclusive, so (100, 100) is outside
+        #expect(!rect.contains(point, margin: 0))
+        // But with positive margin, it becomes inside
+        #expect(rect.contains(point, margin: 1))
+    }
+
+    @Test("境界判定: シミュレーション領域の境界チェック")
+    func simulationBoundsCheck() {
+        let simulationRect = CGRect(origin: .zero, size: CGSize(width: 200, height: 300))
+        let margin: CGFloat = 10
+
+        // Point just outside without margin, inside with margin
+        let edgePoint = CGPoint(x: -5, y: 150)
+        #expect(simulationRect.contains(edgePoint, margin: margin))
+
+        // Point far outside
+        let outsidePoint = CGPoint(x: -20, y: 150)
+        #expect(!simulationRect.contains(outsidePoint, margin: margin))
+    }
+}
+
+// MARK: - DoubleUtilitiesTests
+
+@Suite("Double Utility Extensions")
+struct DoubleUtilitiesTests {
+    @Test("線形補間: 中間値への補間")
+    func lerpToMiddle() {
+        let start = 0.0
+        let result = start.lerp(to: 100.0, t: 0.5)
+
+        #expect(result == 50.0)
+    }
+
+    @Test("線形補間: 開始値 (t=0)")
+    func lerpAtStart() {
+        let start = 10.0
+        let result = start.lerp(to: 20.0, t: 0.0)
+
+        #expect(result == 10.0)
+    }
+
+    @Test("線形補間: 終了値 (t=1)")
+    func lerpAtEnd() {
+        let start = 10.0
+        let result = start.lerp(to: 20.0, t: 1.0)
+
+        #expect(result == 20.0)
+    }
+
+    @Test("線形補間: フェードアウト効果")
+    func lerpFadeOut() {
+        let opacity = 1.0
+        let fadeProgress = 0.3
+
+        let result = opacity.lerp(to: 0.0, t: fadeProgress)
+
+        #expect(result == 0.7)
+    }
+
+    @Test("クランプ: 範囲内の値")
+    func clampedWithinRange() {
+        let value = 0.5
+        let result = value.clamped(to: 0 ... 1)
+
+        #expect(result == 0.5)
+    }
+
+    @Test("クランプ: 下限を超える値")
+    func clampedBelowRange() {
+        let value = -0.5
+        let result = value.clamped(to: 0 ... 1)
+
+        #expect(result == 0.0)
+    }
+
+    @Test("クランプ: 上限を超える値")
+    func clampedAboveRange() {
+        let value = 1.5
+        let result = value.clamped(to: 0 ... 1)
+
+        #expect(result == 1.0)
+    }
+
+    @Test("クランプ: 境界値")
+    func clampedOnBoundary() {
+        #expect(0.0.clamped(to: 0 ... 1) == 0.0)
+        #expect(1.0.clamped(to: 0 ... 1) == 1.0)
+    }
+
+    @Test("複合: フェードアウトの線形補間とクランプ")
+    func lerpAndClampCombined() {
+        let opacity = 1.0
+        let fadeProgress = 1.2 // Over 100%
+
+        let result = opacity.lerp(to: 0.0, t: fadeProgress).clamped(to: 0 ... 1)
+
+        #expect(result == 0.0) // Clamped to 0
     }
 }

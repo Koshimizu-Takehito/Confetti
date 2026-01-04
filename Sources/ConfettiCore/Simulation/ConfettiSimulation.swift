@@ -420,11 +420,8 @@ import Observation
 
     /// Checks if particle has moved outside the simulation area.
     private func isOutOfBounds(_ state: ConfettoState, area bounds: CGSize) -> Bool {
-        let margin = configuration.spawn.boundaryMargin
-        return state.position.y < -margin
-            || state.position.y > bounds.height + margin
-            || state.position.x < -margin
-            || state.position.x > bounds.width + margin
+        let simulationRect = CGRect(origin: .zero, size: bounds)
+        return !simulationRect.contains(state.position, margin: configuration.spawn.boundaryMargin)
     }
 
     // MARK: - Rotation
@@ -440,23 +437,15 @@ import Observation
         var rotationSpeed = traits.rotationSpeed
 
         // Velocity influence (Y velocity → X rotation, X velocity → Y rotation)
-        let velocityEffect = CGVector(
-            dx: state.velocity.dy * RotationDynamics.velocityToRotation.dx,
-            dy: state.velocity.dx * RotationDynamics.velocityToRotation.dy
-        )
-        rotationSpeed += velocityEffect
+        rotationSpeed += state.velocity.swapped.hadamard(RotationDynamics.velocityToRotation)
 
         // Wind influence
         rotationSpeed += windVariation * RotationDynamics.windToRotation
 
-        // Apply rotation
-        state.rotation += rotationSpeed * deltaTime
-
-        // Additional rotation during fast fall
+        // Apply rotation with fast-fall boost if needed
         let fallSpeed = abs(state.velocity.dy)
-        if fallSpeed > RotationDynamics.fastFallThreshold {
-            state.rotation += fallSpeed * RotationDynamics.fastFallRotation * deltaTime
-        }
+        let fallBoost = max(0, fallSpeed - RotationDynamics.fastFallThreshold)
+        state.rotation += (rotationSpeed + fallBoost * RotationDynamics.fastFallRotation) * deltaTime
     }
 
     // MARK: - Lifecycle
@@ -467,7 +456,7 @@ import Observation
 
         if elapsed > fadeStart {
             let fadeProgress = (elapsed - fadeStart) / configuration.lifecycle.fadeOutDuration
-            state.opacity = max(0, 1.0 - fadeProgress)
+            state.opacity = 1.0.lerp(to: 0.0, t: fadeProgress).clamped(to: 0 ... 1)
         }
     }
 }
