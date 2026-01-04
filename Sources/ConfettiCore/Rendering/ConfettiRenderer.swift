@@ -83,14 +83,13 @@ public final class ConfettiRenderer {
     private func updateRenderState(at index: Int, traits: ConfettoTraits, state: ConfettoState) {
         // Depth scale from Y rotation (0.5 to 1.0)
         let depthScale = 0.5 + 0.5 * abs(cos(state.rotationY))
-        let scaledWidth = traits.width * depthScale
-        let scaledHeight = traits.height * depthScale
+        let scaledSize = traits.size * depthScale
 
         let rect = CGRect(
-            x: state.position.x - scaledWidth / 2,
-            y: state.position.y - scaledHeight / 2,
-            width: scaledWidth,
-            height: scaledHeight
+            x: state.position.x - scaledSize.width / 2,
+            y: state.position.y - scaledSize.height / 2,
+            width: scaledSize.width,
+            height: scaledSize.height
         )
 
         // Opacity modulation from X rotation (0.7 to 1.0)

@@ -301,8 +301,7 @@ import Observation
         let height = baseSize * CGFloat.random(in: configuration.appearance.heightScaleRange, using: &numberGenerator)
 
         let traits = ConfettoTraits(
-            width: width,
-            height: height,
+            size: CGSize(width: width, height: height),
             color: colorSource.nextColor(using: &numberGenerator),
             rotationSpeed: CGVector(
                 dx: .random(in: configuration.appearance.rotationXSpeedRange, using: &numberGenerator),
@@ -414,9 +413,7 @@ import Observation
 
     /// Updates particle position based on velocity.
     private func updatePosition(of state: inout ConfettoState, deltaTime: TimeInterval) {
-        // Convert velocity (CGVector) to position delta (CGPoint)
-        let delta = CGPoint(x: state.velocity.dx * deltaTime, y: state.velocity.dy * deltaTime)
-        state.position += delta
+        state.position += CGPoint(state.velocity * deltaTime)
     }
 
     // MARK: - Boundaries

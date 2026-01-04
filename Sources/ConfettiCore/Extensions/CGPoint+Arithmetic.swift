@@ -3,6 +3,27 @@ import CoreGraphics
 // MARK: - CGPoint Arithmetic Extensions
 
 public extension CGPoint {
+    // MARK: - Initialization
+
+    /// Creates a point from a vector.
+    init(_ vector: CGVector) {
+        self.init(x: vector.dx, y: vector.dy)
+    }
+
+    /// Creates a point with the same scalar value for both components.
+    init(scalar: CGFloat) {
+        self.init(x: scalar, y: scalar)
+    }
+
+    // MARK: - Conversion
+
+    /// Converts this point to a vector.
+    var cgVector: CGVector {
+        CGVector(dx: x, dy: y)
+    }
+
+    // MARK: - Arithmetic Operators
+
     /// Adds two points component-wise.
     static func + (lhs: CGPoint, rhs: CGPoint) -> CGPoint {
         CGPoint(x: lhs.x + rhs.x, y: lhs.y + rhs.y)

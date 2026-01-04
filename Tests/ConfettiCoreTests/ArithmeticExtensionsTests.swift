@@ -3,10 +3,141 @@ import Testing
 
 @testable import ConfettiCore
 
+// MARK: - CGSizeArithmeticTests
+
+@Suite("CGSize Arithmetic Extensions")
+struct CGSizeArithmeticTests {
+    // MARK: - Initialization
+
+    @Test("初期化: スカラー値から同じ成分のCGSizeを生成")
+    func sizeFromScalar() {
+        let size = CGSize(scalar: 10.0)
+
+        #expect(size.width == 10.0)
+        #expect(size.height == 10.0)
+    }
+
+    // MARK: - Scalar Multiplication
+
+    @Test("スカラー乗算: サイズ * スカラー")
+    func sizeScalarMultiplication() {
+        let size = CGSize(width: 20.0, height: 10.0)
+        let result = size * 2.0
+
+        #expect(result.width == 40.0)
+        #expect(result.height == 20.0)
+    }
+
+    @Test("スカラー乗算: スカラー * サイズ (可換)")
+    func scalarSizeMultiplication() {
+        let size = CGSize(width: 20.0, height: 10.0)
+        let result = 2.0 * size
+
+        #expect(result.width == 40.0)
+        #expect(result.height == 20.0)
+    }
+
+    @Test("スカラー乗算代入: サイズにスカラーを乗算")
+    func sizeScalarMultiplicationAssignment() {
+        var size = CGSize(width: 20.0, height: 10.0)
+        size *= 2.0
+
+        #expect(size.width == 40.0)
+        #expect(size.height == 20.0)
+    }
+
+    @Test("スカラー乗算: 深度スケールの適用")
+    func sizeDepthScaling() {
+        let originalSize = CGSize(width: 30.0, height: 15.0)
+        let depthScale = 0.75
+
+        let scaledSize = originalSize * depthScale
+
+        #expect(scaledSize.width == 22.5)
+        #expect(scaledSize.height == 11.25)
+    }
+
+    @Test("スカラー乗算: ゼロとの乗算")
+    func sizeScalarMultiplicationWithZero() {
+        let size = CGSize(width: 20.0, height: 10.0)
+        let result = size * 0.0
+
+        #expect(result.width == 0.0)
+        #expect(result.height == 0.0)
+    }
+
+    // MARK: - Scalar Division
+
+    @Test("スカラー除算: サイズ / スカラー")
+    func sizeScalarDivision() {
+        let size = CGSize(width: 40.0, height: 20.0)
+        let result = size / 2.0
+
+        #expect(result.width == 20.0)
+        #expect(result.height == 10.0)
+    }
+
+    @Test("スカラー除算代入: サイズをスカラーで除算")
+    func sizeScalarDivisionAssignment() {
+        var size = CGSize(width: 40.0, height: 20.0)
+        size /= 2.0
+
+        #expect(size.width == 20.0)
+        #expect(size.height == 10.0)
+    }
+
+    @Test("スカラー除算: 負のスカラーでの除算")
+    func sizeScalarDivisionWithNegative() {
+        let size = CGSize(width: 40.0, height: 20.0)
+        let result = size / -2.0
+
+        #expect(result.width == -20.0)
+        #expect(result.height == -10.0)
+    }
+}
+
 // MARK: - CGVectorArithmeticTests
 
 @Suite("CGVector Arithmetic Extensions")
 struct CGVectorArithmeticTests {
+    // MARK: - Initialization & Conversion
+
+    @Test("初期化: CGPointからCGVectorを生成")
+    func vectorFromPoint() {
+        let point = CGPoint(x: 3.0, y: 4.0)
+        let vector = CGVector(point)
+
+        #expect(vector.dx == 3.0)
+        #expect(vector.dy == 4.0)
+    }
+
+    @Test("初期化: スカラー値から同じ成分のCGVectorを生成")
+    func vectorFromScalar() {
+        let vector = CGVector(scalar: 5.0)
+
+        #expect(vector.dx == 5.0)
+        #expect(vector.dy == 5.0)
+    }
+
+    @Test("変換: CGVectorをCGPointに変換")
+    func vectorToPoint() {
+        let vector = CGVector(dx: 7.0, dy: 9.0)
+        let point = vector.cgPoint
+
+        #expect(point.x == 7.0)
+        #expect(point.y == 9.0)
+    }
+
+    @Test("変換: CGVector → CGPoint → CGVectorの往復変換")
+    func vectorRoundTrip() {
+        let original = CGVector(dx: 12.5, dy: -8.3)
+        let point = original.cgPoint
+        let restored = CGVector(point)
+
+        #expect(restored.dx == original.dx)
+        #expect(restored.dy == original.dy)
+    }
+
     // MARK: - Addition
 
     @Test("加算: 2つのベクトルの成分ごとの加算")
@@ -190,12 +321,62 @@ struct CGVectorArithmeticTests {
         #expect(velocity.dx == 11.0) // 10 + 2*0.5
         #expect(velocity.dy == 17.5) // 20 + (-5)*0.5
     }
+
+    @Test("変換: 速度ベクトルから位置の変化を計算")
+    func vectorToPositionDelta() {
+        let velocity = CGVector(dx: 10.0, dy: -5.0)
+        let deltaTime = 0.5
+
+        // Convert velocity * deltaTime to position delta
+        let delta = CGPoint(velocity * deltaTime)
+
+        #expect(delta.x == 5.0) // 10 * 0.5
+        #expect(delta.y == -2.5) // -5 * 0.5
+    }
 }
 
 // MARK: - CGPointArithmeticTests
 
 @Suite("CGPoint Arithmetic Extensions")
 struct CGPointArithmeticTests {
+    // MARK: - Initialization & Conversion
+
+    @Test("初期化: CGVectorからCGPointを生成")
+    func pointFromVector() {
+        let vector = CGVector(dx: 3.0, dy: 4.0)
+        let point = CGPoint(vector)
+
+        #expect(point.x == 3.0)
+        #expect(point.y == 4.0)
+    }
+
+    @Test("初期化: スカラー値から同じ成分のCGPointを生成")
+    func pointFromScalar() {
+        let point = CGPoint(scalar: 5.0)
+
+        #expect(point.x == 5.0)
+        #expect(point.y == 5.0)
+    }
+
+    @Test("変換: CGPointをCGVectorに変換")
+    func pointToVector() {
+        let point = CGPoint(x: 7.0, y: 9.0)
+        let vector = point.cgVector
+
+        #expect(vector.dx == 7.0)
+        #expect(vector.dy == 9.0)
+    }
+
+    @Test("変換: CGPoint → CGVector → CGPointの往復変換")
+    func pointRoundTrip() {
+        let original = CGPoint(x: 12.5, y: -8.3)
+        let vector = original.cgVector
+        let restored = CGPoint(vector)
+
+        #expect(restored.x == original.x)
+        #expect(restored.y == original.y)
+    }
+
     // MARK: - Addition
 
     @Test("加算: 2つのポイントの成分ごとの加算")

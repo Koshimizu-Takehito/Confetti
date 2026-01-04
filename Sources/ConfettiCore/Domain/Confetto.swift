@@ -10,11 +10,8 @@ public struct ConfettoTraits: Sendable {
     /// Unique identifier
     public let id: UUID
 
-    /// Width
-    public let width: CGFloat
-
-    /// Height
-    public let height: CGFloat
+    /// Size (width and height)
+    public let size: CGSize
 
     /// Fill color
     public let color: CGColor
@@ -28,6 +25,21 @@ public struct ConfettoTraits: Sendable {
     /// Initializes with the specified parameters.
     public init(
         id: UUID = UUID(),
+        size: CGSize,
+        color: CGColor,
+        rotationSpeed: CGVector,
+        windForce: Double
+    ) {
+        self.id = id
+        self.size = size
+        self.color = color
+        self.rotationSpeed = rotationSpeed
+        self.windForce = windForce
+    }
+
+    /// Initializes with separate width and height (compatibility).
+    public init(
+        id: UUID = UUID(),
         width: CGFloat,
         height: CGFloat,
         color: CGColor,
@@ -35,14 +47,13 @@ public struct ConfettoTraits: Sendable {
         windForce: Double
     ) {
         self.id = id
-        self.width = width
-        self.height = height
+        self.size = CGSize(width: width, height: height)
         self.color = color
         self.rotationSpeed = rotationSpeed
         self.windForce = windForce
     }
 
-    /// Initializes with separate rotation speed components (compatibility).
+    /// Initializes with separate width, height, and rotation speed components (compatibility).
     public init(
         id: UUID = UUID(),
         width: CGFloat,
@@ -53,11 +64,20 @@ public struct ConfettoTraits: Sendable {
         windForce: Double
     ) {
         self.id = id
-        self.width = width
-        self.height = height
+        self.size = CGSize(width: width, height: height)
         self.color = color
         self.rotationSpeed = CGVector(dx: rotationXSpeed, dy: rotationYSpeed)
         self.windForce = windForce
+    }
+
+    /// Width (computed property for convenience).
+    public var width: CGFloat {
+        size.width
+    }
+
+    /// Height (computed property for convenience).
+    public var height: CGFloat {
+        size.height
     }
 
     /// X-axis rotation speed in radians per second (computed property for convenience).
