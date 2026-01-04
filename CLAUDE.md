@@ -25,34 +25,42 @@ Always run `make ci` before submitting pull requests to ensure all checks pass.
 
 ## Architecture
 
-The project follows a 3-layer modular architecture:
+The project follows a 3-layer modular architecture with strict encapsulation:
 
 ```
 ConfettiUI (SwiftUI Views & Components)
-    ↓
+    ↓ Uses public API only
 ConfettiPlayback (Playback Control & Rendering)
-    ↓  
-ConfettiCore (Internal Domain Models & Physics)
+    ↓ Exposes minimal interface via computed properties
+ConfettiCore (Internal Domain Models & Physics) - Hidden from external access
 ```
 
 **Key Modules:**
-- `/Sources/ConfettiCore/` - Internal module with domain models and physics simulation
-- `/Sources/ConfettiPlayback/` - Public API for playback control and render state
-- `/Sources/ConfettiUI/` - SwiftUI views and components
+- `/Sources/ConfettiCore/` - **Internal module** - Core physics engine, state machine, and domain models (not exposed publicly)
+- `/Sources/ConfettiPlayback/` - **Public API** - `ConfettiPlayer` with encapsulated interface; hides `ConfettiSimulation` internals
+- `/Sources/ConfettiUI/` - **UI layer** - SwiftUI views and components built on public API
 - `/Example/` - Complete demo app for iOS/macOS
 - `/Tests/` - Unit tests using Swift Testing framework
 
+**Encapsulation Strategy:**
+- `ConfettiPlayer` exposes only: `renderStates`, `currentTime`, `duration`, `state` (all read-only computed properties)
+- Internal `ConfettiSimulation` is private, preventing external state manipulation
+- SSoT maintained through version-based cache invalidation (~180x speedup)
+
 ## Key Files to Understand
 
-1. `/Sources/ConfettiPlayback/Playback/ConfettiPlayer.swift` - Main API with video-player-like controls
-2. `/Sources/ConfettiCore/Config/ConfettiConfig.swift` - Configuration system with presets
-3. `/Sources/ConfettiUI/Views/ConfettiScreen.swift` - Primary SwiftUI component
-4. `/Sources/ConfettiCore/Documentation.docc/Articles/PublicAPIContract.md` - Internal API contract
+1. `/Sources/ConfettiPlayback/Playback/ConfettiPlayer.swift` - Main public API with video-player-like controls; encapsulates internal `ConfettiSimulation`
+2. `/Sources/ConfettiCore/Simulation/ConfettiSimulation.swift` - Internal SSoT state machine with @Observable pattern and version-based caching
+3. `/Sources/ConfettiCore/Config/ConfettiConfig.swift` - Configuration system with presets
+4. `/Sources/ConfettiUI/Views/ConfettiScreen.swift` - Primary SwiftUI component
+5. `/Sources/ConfettiCore/Documentation.docc/Articles/PublicAPIContract.md` - v2.0.0 breaking changes and SSoT architecture documentation
 
 ## Design Principles
 
+- **Single Source of Truth (SSoT)** - State managed by `ConfettiSimulation` with version-based cache invalidation
+- **Strong encapsulation** - Internal implementation hidden; only necessary interface exposed via computed properties
 - **Fixed time step simulation** - Consistent animation across refresh rates
-- **Deterministic seeking** - Seek to any time with consistent results  
+- **Deterministic seeking** - Seek to any time with consistent results
 - **Injectable randomness** - Enables testable code via `RandomNumberGenerator`
 - **Separation of concerns** - Core logic is UI-independent
 

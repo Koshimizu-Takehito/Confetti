@@ -75,34 +75,3 @@ struct MetalConfettiView: PlatformAgnosticViewRepresentable {
         MetalConfettiCoordinator(device: MTLCreateSystemDefaultDevice())
     }
 }
-
-// MARK: - Color Extension
-
-private extension Color {
-    /// Converts SwiftUI Color to SIMD4<Float> (RGBA).
-    var simdColor: SIMD4<Float> {
-        #if canImport(UIKit)
-        let platformColor = UIColor(self)
-        #elseif canImport(AppKit)
-        let platformColor = NSColor(self)
-        #endif
-
-        var red: CGFloat = 0
-        var green: CGFloat = 0
-        var blue: CGFloat = 0
-        var alpha: CGFloat = 0
-
-        #if canImport(AppKit) && !targetEnvironment(macCatalyst)
-        // Convert to sRGB color space on macOS
-        if let srgbColor = platformColor.usingColorSpace(.sRGB) {
-            srgbColor.getRed(&red, green: &green, blue: &blue, alpha: &alpha)
-        } else {
-            platformColor.getRed(&red, green: &green, blue: &blue, alpha: &alpha)
-        }
-        #else
-        platformColor.getRed(&red, green: &green, blue: &blue, alpha: &alpha)
-        #endif
-
-        return SIMD4<Float>(Float(red), Float(green), Float(blue), Float(alpha))
-    }
-}

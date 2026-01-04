@@ -331,7 +331,7 @@ class ConfettiView: UIView {
     }
     
     @objc private func handleDisplayLink() {
-        guard player.isRunning else {
+        guard player.state.isRunning else {
             displayLink?.invalidate()
             displayLink = nil
             return
@@ -382,7 +382,7 @@ class ConfettiView: NSView {
         
         // フレーム更新のためのタイマーを開始
         timer = Timer.scheduledTimer(withTimeInterval: 1.0/120.0, repeats: true) { [weak self] _ in
-            guard self?.player.isRunning == true else {
+            guard self?.player.state.isRunning == true else {
                 self?.timer?.invalidate()
                 return
             }

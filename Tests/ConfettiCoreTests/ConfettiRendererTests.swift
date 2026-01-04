@@ -369,9 +369,9 @@ func rendererReusesBuffer() {
     ]
     let cloud1 = ConfettiCloud(traits: traits1, states: states1, aliveCount: 2)
 
-    renderer.update(from: cloud1)
+    let renderStates1 = renderer.update(from: cloud1)
     #expect(renderer.activeCount == 2)
-    #expect(renderer.renderStates.count == 2)
+    #expect(renderStates1.count == 2)
 
     // Second update with different data
     let traits2 = [
@@ -389,10 +389,10 @@ func rendererReusesBuffer() {
     ]
     let cloud2 = ConfettiCloud(traits: traits2, states: states2, aliveCount: 1)
 
-    renderer.update(from: cloud2)
+    let renderStates2 = renderer.update(from: cloud2)
     #expect(renderer.activeCount == 1)
-    #expect(renderer.renderStates.count == 1)
-    #expect(renderer.renderStates[0].id == traits2[0].id)
+    #expect(renderStates2.count == 1)
+    #expect(renderStates2[0].id == traits2[0].id)
 }
 
 @Test("Buffer reuse: Clear resets activeCount")
@@ -414,12 +414,11 @@ func rendererClearResetsActiveCount() {
     ]
     let cloud = ConfettiCloud(traits: traits, states: states, aliveCount: 1)
 
-    renderer.update(from: cloud)
+    _ = renderer.update(from: cloud)
     #expect(renderer.activeCount == 1)
 
     renderer.clear()
     #expect(renderer.activeCount == 0)
-    #expect(renderer.renderStates.isEmpty)
 }
 
 @Test("Buffer reuse: Reset releases buffer memory")
@@ -434,12 +433,11 @@ func rendererResetReleasesMemory() {
     }
     let cloud = ConfettiCloud(traits: traits, states: states, aliveCount: 50)
 
-    renderer.update(from: cloud)
+    _ = renderer.update(from: cloud)
     #expect(renderer.activeCount == 50)
 
     renderer.reset()
     #expect(renderer.activeCount == 0)
-    #expect(renderer.renderStates.isEmpty)
 }
 
 @Test("Buffer reuse: Buffer grows when needed")
@@ -471,7 +469,7 @@ func rendererBufferGrowsWhenNeeded() {
     ]
     let cloud1 = ConfettiCloud(traits: traits1, states: states1, aliveCount: 2)
 
-    renderer.update(from: cloud1)
+    _ = renderer.update(from: cloud1)
     #expect(renderer.activeCount == 2)
 
     // Second update with 5 particles (needs buffer growth)
@@ -496,9 +494,9 @@ func rendererBufferGrowsWhenNeeded() {
     }
     let cloud2 = ConfettiCloud(traits: traits2, states: states2, aliveCount: 5)
 
-    renderer.update(from: cloud2)
+    let renderStates = renderer.update(from: cloud2)
     #expect(renderer.activeCount == 5)
-    #expect(renderer.renderStates.count == 5)
+    #expect(renderStates.count == 5)
 }
 
 @Test("Buffer reuse: Multiple updates produce correct results")
@@ -527,9 +525,9 @@ func rendererMultipleUpdatesProduceCorrectResults() {
         }
         let cloud = ConfettiCloud(traits: traits, states: states, aliveCount: i)
 
-        renderer.update(from: cloud)
+        let renderStates = renderer.update(from: cloud)
 
         #expect(renderer.activeCount == i, "Iteration \(i): activeCount should be \(i)")
-        #expect(renderer.renderStates.count == i, "Iteration \(i): renderStates count should be \(i)")
+        #expect(renderStates.count == i, "Iteration \(i): renderStates count should be \(i)")
     }
 }

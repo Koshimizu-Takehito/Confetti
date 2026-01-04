@@ -93,8 +93,6 @@ final class ConfettiDrawingView: UIView {
         guard let context = UIGraphicsGetCurrentContext() else { return }
 
         for state in player.renderStates {
-            guard let cgColor = state.color.cgColor else { continue }
-
             context.saveGState()
             context.setAlpha(state.opacity)
 
@@ -103,7 +101,7 @@ final class ConfettiDrawingView: UIView {
             context.rotate(by: state.zRotation)
             context.translateBy(x: -center.x, y: -center.y)
 
-            context.setFillColor(cgColor)
+            context.setFillColor(state.color)
             context.fill(state.rect)
 
             context.restoreGState()

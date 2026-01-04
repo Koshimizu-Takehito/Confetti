@@ -1,6 +1,4 @@
-import ConfettiCore
 import Foundation
-import SwiftUI
 
 // MARK: - ConfettiRenderer
 
@@ -14,11 +12,10 @@ import SwiftUI
 /// The buffer is reused and resized only when the particle count increases.
 ///
 /// ```swift
-/// var renderer = ConfettiRenderer()
-/// renderer.update(from: cloud)
-/// let states = renderer.renderStates // No allocation if count hasn't increased
+/// let renderer = ConfettiRenderer()
+/// let states = renderer.update(from: cloud) // Reuses internal buffer
 /// ```
-public struct ConfettiRenderer: Sendable {
+public final class ConfettiRenderer {
     // MARK: - Buffer
 
     /// Internal buffer for render states (reused across frames)
@@ -26,11 +23,6 @@ public struct ConfettiRenderer: Sendable {
 
     /// Number of active render states in the buffer
     public private(set) var activeCount: Int = 0
-
-    /// Current render states (view into the active portion of the buffer)
-    public var renderStates: [ParticleRenderState] {
-        Array(buffer.prefix(activeCount))
-    }
 
     // MARK: - Initializer
 
@@ -48,7 +40,8 @@ public struct ConfettiRenderer: Sendable {
     /// The buffer grows if needed but never shrinks automatically.
     ///
     /// - Parameter cloud: Source ConfettiCloud
-    public mutating func update(from cloud: ConfettiCloud) {
+    /// - Returns: Array of render states
+    public func update(from cloud: ConfettiCloud) -> [ParticleRenderState] {
         let count = cloud.aliveCount
         activeCount = count
 
@@ -61,22 +54,24 @@ public struct ConfettiRenderer: Sendable {
             let state = cloud.states[index]
             updateRenderState(at: index, traits: traits, state: state)
         }
+
+        return Array(buffer.prefix(activeCount))
     }
 
     /// Clears all render states.
-    public mutating func clear() {
+    public func clear() {
         activeCount = 0
     }
 
     /// Resets the renderer and releases the buffer memory.
-    public mutating func reset() {
+    public func reset() {
         buffer.removeAll(keepingCapacity: false)
         activeCount = 0
     }
 
     // MARK: - Private
 
-    private mutating func ensureCapacity(_ count: Int) {
+    private func ensureCapacity(_ count: Int) {
         let currentCount = buffer.count
         if currentCount < count {
             // Append placeholder elements to expand the buffer
@@ -85,7 +80,7 @@ public struct ConfettiRenderer: Sendable {
         }
     }
 
-    private mutating func updateRenderState(at index: Int, traits: ConfettoTraits, state: ConfettoState) {
+    private func updateRenderState(at index: Int, traits: ConfettoTraits, state: ConfettoState) {
         // Depth scale from Y rotation (0.5 to 1.0)
         let depthScale = 0.5 + 0.5 * abs(cos(state.rotationY))
         let scaledWidth = traits.width * depthScale
@@ -107,7 +102,7 @@ public struct ConfettiRenderer: Sendable {
 
         buffer[index].id = traits.id
         buffer[index].rect = rect
-        buffer[index].color = Color(cgColor: traits.color)
+        buffer[index].color = traits.color
         buffer[index].opacity = opacity
         buffer[index].zRotation = zRotation
     }
@@ -124,8 +119,7 @@ public extension ConfettiRenderer {
     /// - Parameter cloud: Source ConfettiCloud
     /// - Returns: Array of render states
     static func renderStates(from cloud: ConfettiCloud) -> [ParticleRenderState] {
-        var renderer = ConfettiRenderer(initialCapacity: cloud.aliveCount)
-        renderer.update(from: cloud)
-        return renderer.renderStates
+        let renderer = ConfettiRenderer(initialCapacity: cloud.aliveCount)
+        return renderer.update(from: cloud)
     }
 }

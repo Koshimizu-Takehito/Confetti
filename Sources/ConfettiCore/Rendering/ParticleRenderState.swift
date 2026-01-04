@@ -1,6 +1,5 @@
 import CoreGraphics
 import Foundation
-import SwiftUI
 
 /// Particle state required for Canvas rendering.
 ///
@@ -13,7 +12,7 @@ public struct ParticleRenderState: Identifiable, Sendable {
     public var rect: CGRect
 
     /// Fill color
-    public var color: Color
+    public var color: CGColor
 
     /// Opacity (0 to 1)
     public var opacity: Double
@@ -31,7 +30,7 @@ public struct ParticleRenderState: Identifiable, Sendable {
     public init(
         id: UUID = UUID(),
         rect: CGRect = .zero,
-        color: Color = .clear,
+        color: CGColor = CGColor(gray: 0, alpha: 0),
         opacity: Double = 0,
         zRotation: Double = 0
     ) {

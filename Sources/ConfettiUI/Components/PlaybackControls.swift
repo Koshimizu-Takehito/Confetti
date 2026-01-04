@@ -35,7 +35,7 @@ struct PlaybackControls: View {
                 controlButton(
                     systemName: "stop.fill",
                     action: { player.stop() },
-                    isEnabled: player.isRunning,
+                    isEnabled: player.state.isRunning,
                     accessibilityLabel: "Stop"
                 )
 
@@ -46,7 +46,7 @@ struct PlaybackControls: View {
                 controlButton(
                     systemName: "arrow.counterclockwise",
                     action: { player.play(canvasSize: canvasSize) },
-                    isEnabled: !player.isRunning,
+                    isEnabled: !player.state.isRunning,
                     accessibilityLabel: "Replay"
                 )
             }
@@ -66,7 +66,7 @@ struct PlaybackControls: View {
 
     @ViewBuilder
     private var playPauseButton: some View {
-        if !player.isRunning {
+        if !player.state.isRunning {
             // Not started - show play button
             controlButton(
                 systemName: "play.fill",
@@ -75,7 +75,7 @@ struct PlaybackControls: View {
                 isPrimary: true,
                 accessibilityLabel: "Play"
             )
-        } else if player.isPaused {
+        } else if player.state.isPaused {
             // Paused - show resume button
             controlButton(
                 systemName: "play.fill",
@@ -100,7 +100,7 @@ struct PlaybackControls: View {
 
     private func handleSeekStart() {
         // Pause playback during seek if currently playing
-        wasPlayingBeforeSeek = player.isRunning && !player.isPaused
+        wasPlayingBeforeSeek = player.state.isRunning && !player.state.isPaused
         if wasPlayingBeforeSeek {
             player.pause()
         }

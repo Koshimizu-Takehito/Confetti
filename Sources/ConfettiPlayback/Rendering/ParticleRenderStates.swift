@@ -18,7 +18,7 @@ import Foundation
 /// ## Usage
 ///
 /// ```swift
-/// let states = renderer.renderStates
+/// let states = renderer.update(from: cloud)
 /// for state in states {
 ///     // Draw particle
 /// }

@@ -129,13 +129,9 @@ final class ConfettiSKScene: SKScene {
 
             // Update color
             #if canImport(UIKit)
-            if let cgColor = state.color.cgColor {
-                node.color = UIColor(cgColor: cgColor)
-            }
+            node.color = UIColor(cgColor: state.color)
             #elseif canImport(AppKit)
-            if let cgColor = state.color.cgColor {
-                node.color = NSColor(cgColor: cgColor) ?? .white
-            }
+            node.color = NSColor(cgColor: state.color) ?? .white
             #endif
             node.colorBlendFactor = 1.0
 
