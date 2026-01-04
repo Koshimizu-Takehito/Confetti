@@ -33,10 +33,6 @@ let package = Package(
             dependencies: ["ConfettiCore"]
         ),
         .testTarget(
-            name: "ConfettiPlaybackTests",
-            dependencies: ["ConfettiCore", "ConfettiPlayback"]
-        ),
-        .testTarget(
             name: "ConfettiUITests",
             dependencies: ["ConfettiPlayback", "ConfettiUI"]
         ),
