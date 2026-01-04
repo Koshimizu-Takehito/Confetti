@@ -53,7 +53,7 @@ struct ContentView: View {
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/Koshimizu-Takehito/Confetti.git", from: "1.0.0")
+    .package(url: "https://github.com/Koshimizu-Takehito/Confetti.git", from: "2.0.0")
 ]
 ```
 
@@ -72,7 +72,7 @@ dependencies: [
 
 1. File → Add Package Dependencies...
 2. URL を入力: `https://github.com/Koshimizu-Takehito/Confetti.git`
-3. バージョンを選択: `1.0.0` 以降
+3. バージョンを選択: `2.0.0` 以降
 
 ---
 
