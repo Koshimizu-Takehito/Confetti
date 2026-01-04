@@ -1198,4 +1198,5 @@ struct OutOfBoundsTestCase: Sendable {
     // しかし、version は異なる（キャッシュは無効化されている）
     // この動作は意図的：seek は常に cloud を再構築するため
 }
+
 // swiftlint:enable file_length
