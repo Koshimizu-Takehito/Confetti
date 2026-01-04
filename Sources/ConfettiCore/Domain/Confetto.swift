@@ -19,16 +19,30 @@ public struct ConfettoTraits: Sendable {
     /// Fill color
     public let color: CGColor
 
-    /// X-axis rotation speed (radians per second)
-    public let rotationXSpeed: Double
-
-    /// Y-axis rotation speed (radians per second)
-    public let rotationYSpeed: Double
+    /// Rotation speed (dx: X-axis, dy: Y-axis) in radians per second
+    public let rotationSpeed: CGVector
 
     /// Wind influence factor
     public let windForce: Double
 
     /// Initializes with the specified parameters.
+    public init(
+        id: UUID = UUID(),
+        width: CGFloat,
+        height: CGFloat,
+        color: CGColor,
+        rotationSpeed: CGVector,
+        windForce: Double
+    ) {
+        self.id = id
+        self.width = width
+        self.height = height
+        self.color = color
+        self.rotationSpeed = rotationSpeed
+        self.windForce = windForce
+    }
+
+    /// Initializes with separate rotation speed components (compatibility).
     public init(
         id: UUID = UUID(),
         width: CGFloat,
@@ -42,9 +56,18 @@ public struct ConfettoTraits: Sendable {
         self.width = width
         self.height = height
         self.color = color
-        self.rotationXSpeed = rotationXSpeed
-        self.rotationYSpeed = rotationYSpeed
+        self.rotationSpeed = CGVector(dx: rotationXSpeed, dy: rotationYSpeed)
         self.windForce = windForce
+    }
+
+    /// X-axis rotation speed in radians per second (computed property for convenience).
+    public var rotationXSpeed: Double {
+        rotationSpeed.dx
+    }
+
+    /// Y-axis rotation speed in radians per second (computed property for convenience).
+    public var rotationYSpeed: Double {
+        rotationSpeed.dy
     }
 }
 
@@ -60,16 +83,26 @@ public struct ConfettoState: Sendable {
     /// Velocity
     public var velocity: CGVector
 
-    /// X-axis rotation (radians)
-    public var rotationX: Double
-
-    /// Y-axis rotation (radians)
-    public var rotationY: Double
+    /// Rotation (dx: X-axis rotation, dy: Y-axis rotation) in radians
+    public var rotation: CGVector
 
     /// Opacity (0 to 1)
     public var opacity: Double
 
     /// Initializes with the specified parameters.
+    public init(
+        position: CGPoint,
+        velocity: CGVector,
+        rotation: CGVector,
+        opacity: Double = 1.0
+    ) {
+        self.position = position
+        self.velocity = velocity
+        self.rotation = rotation
+        self.opacity = opacity
+    }
+
+    /// Initializes with separate rotation components (compatibility).
     public init(
         position: CGPoint,
         velocity: CGVector,
@@ -79,8 +112,19 @@ public struct ConfettoState: Sendable {
     ) {
         self.position = position
         self.velocity = velocity
-        self.rotationX = rotationX
-        self.rotationY = rotationY
+        self.rotation = CGVector(dx: rotationX, dy: rotationY)
         self.opacity = opacity
+    }
+
+    /// X-axis rotation in radians (computed property for convenience).
+    public var rotationX: Double {
+        get { rotation.dx }
+        set { rotation.dx = newValue }
+    }
+
+    /// Y-axis rotation in radians (computed property for convenience).
+    public var rotationY: Double {
+        get { rotation.dy }
+        set { rotation.dy = newValue }
     }
 }

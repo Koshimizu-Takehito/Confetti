@@ -18,20 +18,14 @@ import Observation
 
     /// Coefficients for velocity-to-rotation effects
     private enum RotationDynamics {
-        /// Y velocity → X rotation coefficient
-        static let velocityToRotationX: Double = 0.01
-        /// X velocity → Y rotation coefficient
-        static let velocityToRotationY: Double = 0.008
-        /// Wind → X rotation coefficient
-        static let windToRotationX: Double = 0.05
-        /// Wind → Y rotation coefficient
-        static let windToRotationY: Double = 0.03
+        /// Velocity to rotation coefficients (dx: Y velocity → X rotation, dy: X velocity → Y rotation)
+        static let velocityToRotation = CGVector(dx: 0.01, dy: 0.008)
+        /// Wind to rotation coefficients (dx: wind → X rotation, dy: wind → Y rotation)
+        static let windToRotation = CGVector(dx: 0.05, dy: 0.03)
         /// Velocity threshold for fast fall detection
         static let fastFallThreshold: CGFloat = 10
-        /// Additional X rotation coefficient during fast fall
-        static let fastFallRotationX: Double = 0.0005
-        /// Additional Y rotation coefficient during fast fall
-        static let fastFallRotationY: Double = 0.0003
+        /// Fast fall rotation coefficients (dx: X rotation, dy: Y rotation)
+        static let fastFallRotation = CGVector(dx: 0.0005, dy: 0.0003)
     }
 
     // MARK: - Nested Types
@@ -310,16 +304,20 @@ import Observation
             width: width,
             height: height,
             color: colorSource.nextColor(using: &numberGenerator),
-            rotationXSpeed: .random(in: configuration.appearance.rotationXSpeedRange, using: &numberGenerator),
-            rotationYSpeed: .random(in: configuration.appearance.rotationYSpeedRange, using: &numberGenerator),
+            rotationSpeed: CGVector(
+                dx: .random(in: configuration.appearance.rotationXSpeedRange, using: &numberGenerator),
+                dy: .random(in: configuration.appearance.rotationYSpeedRange, using: &numberGenerator)
+            ),
             windForce: .random(in: configuration.wind.forceRange, using: &numberGenerator)
         )
 
         let state = ConfettoState(
             position: origin,
             velocity: velocity,
-            rotationX: .random(in: 0 ... .pi * 2, using: &numberGenerator),
-            rotationY: .random(in: 0 ... .pi * 2, using: &numberGenerator)
+            rotation: CGVector(
+                dx: Double.random(in: 0 ... .pi * 2, using: &numberGenerator),
+                dy: Double.random(in: 0 ... .pi * 2, using: &numberGenerator)
+            )
         )
 
         return (traits, state)
@@ -402,8 +400,7 @@ import Observation
 
     /// Applies drag (air resistance) to particle velocity.
     private func applyDrag(to state: inout ConfettoState) {
-        state.velocity.dx *= configuration.physics.drag
-        state.velocity.dy *= configuration.physics.drag
+        state.velocity *= configuration.physics.drag
     }
 
     /// Limits terminal velocity (falling direction only).
@@ -417,8 +414,9 @@ import Observation
 
     /// Updates particle position based on velocity.
     private func updatePosition(of state: inout ConfettoState, deltaTime: TimeInterval) {
-        state.position.x += state.velocity.dx * deltaTime
-        state.position.y += state.velocity.dy * deltaTime
+        // Convert velocity (CGVector) to position delta (CGPoint)
+        let delta = CGPoint(x: state.velocity.dx * deltaTime, y: state.velocity.dy * deltaTime)
+        state.position += delta
     }
 
     // MARK: - Boundaries
@@ -441,59 +439,26 @@ import Observation
         windVariation: Double,
         deltaTime: TimeInterval
     ) {
-        updateRotationX(of: &state, traits: traits, windVariation: windVariation, deltaTime: deltaTime)
-        updateRotationY(of: &state, traits: traits, windVariation: windVariation, deltaTime: deltaTime)
-    }
+        // Base rotation speed from traits
+        var rotationSpeed = traits.rotationSpeed
 
-    /// Updates X-axis rotation (flutter effect).
-    private func updateRotationX(
-        of state: inout ConfettoState,
-        traits: ConfettoTraits,
-        windVariation: Double,
-        deltaTime: TimeInterval
-    ) {
-        // Base rotation speed
-        var rotationSpeed = traits.rotationXSpeed
-
-        // Velocity influence
-        rotationSpeed += state.velocity.dy * RotationDynamics.velocityToRotationX
+        // Velocity influence (Y velocity → X rotation, X velocity → Y rotation)
+        let velocityEffect = CGVector(
+            dx: state.velocity.dy * RotationDynamics.velocityToRotation.dx,
+            dy: state.velocity.dx * RotationDynamics.velocityToRotation.dy
+        )
+        rotationSpeed += velocityEffect
 
         // Wind influence
-        rotationSpeed += windVariation * RotationDynamics.windToRotationX
+        rotationSpeed += windVariation * RotationDynamics.windToRotation
 
         // Apply rotation
-        state.rotationX += rotationSpeed * deltaTime
+        state.rotation += rotationSpeed * deltaTime
 
         // Additional rotation during fast fall
         let fallSpeed = abs(state.velocity.dy)
         if fallSpeed > RotationDynamics.fastFallThreshold {
-            state.rotationX += fallSpeed * RotationDynamics.fastFallRotationX * deltaTime
-        }
-    }
-
-    /// Updates Y-axis rotation (flip effect).
-    private func updateRotationY(
-        of state: inout ConfettoState,
-        traits: ConfettoTraits,
-        windVariation: Double,
-        deltaTime: TimeInterval
-    ) {
-        // Base rotation speed
-        var rotationSpeed = traits.rotationYSpeed
-
-        // Velocity influence
-        rotationSpeed += state.velocity.dx * RotationDynamics.velocityToRotationY
-
-        // Wind influence
-        rotationSpeed += windVariation * RotationDynamics.windToRotationY
-
-        // Apply rotation
-        state.rotationY += rotationSpeed * deltaTime
-
-        // Additional rotation during fast fall
-        let fallSpeed = abs(state.velocity.dy)
-        if fallSpeed > RotationDynamics.fastFallThreshold {
-            state.rotationY += fallSpeed * RotationDynamics.fastFallRotationY * deltaTime
+            state.rotation += fallSpeed * RotationDynamics.fastFallRotation * deltaTime
         }
     }
 
