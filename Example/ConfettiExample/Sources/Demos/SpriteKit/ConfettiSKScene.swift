@@ -74,7 +74,7 @@ final class ConfettiSKScene: SKScene {
         let player = player
 
         withObservationTracking {
-            _ = player.simulation.renderStates
+            _ = player.renderStates
         } onChange: { [weak self] in
             Task { @MainActor [weak self] in
                 guard let self, isObserving else { return }
@@ -106,7 +106,7 @@ final class ConfettiSKScene: SKScene {
     // MARK: - Particle Rendering
 
     private func updateParticleNodes() {
-        let renderStates = player.simulation.renderStates
+        let renderStates = player.renderStates
 
         // Ensure we have enough nodes (node pooling)
         while particleNodes.count < renderStates.count {

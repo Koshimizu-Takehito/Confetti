@@ -12,7 +12,7 @@ import SwiftUI
 /// ## Example
 ///
 /// ```swift
-/// MetalConfettiView(renderStates: player.simulation.renderStates)
+/// MetalConfettiView(renderStates: player.renderStates)
 /// ```
 struct MetalConfettiView: PlatformAgnosticViewRepresentable {
     // MARK: - Properties

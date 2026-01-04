@@ -62,7 +62,7 @@ final class ObservationDemoViewModel {
     /// This computed property forwards the player's render states, enabling
     /// automatic observation tracking when accessed from a SwiftUI view.
     var renderStates: [ParticleRenderState] {
-        player.simulation.renderStates
+        player.renderStates
     }
 
     // MARK: - Playback Control

@@ -56,7 +56,7 @@ public struct ConfettiPlayerScreen: View {
     // MARK: - Body
 
     public var body: some View {
-        ConfettiCanvas(renderStates: player.simulation.renderStates)
+        ConfettiCanvas(renderStates: player.renderStates)
             .background(content: backgroundGradient)
             .overlay(alignment: .bottom) {
                 PlaybackControls(player: player, canvasSize: canvasSize)

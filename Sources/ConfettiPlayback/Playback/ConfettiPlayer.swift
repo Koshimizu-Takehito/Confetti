@@ -38,11 +38,36 @@ import Observation
 @Observable public final class ConfettiPlayer {
     // MARK: - Dependencies
 
-    public let simulation: ConfettiSimulation
+    private let simulation: ConfettiSimulation
     @ObservationIgnored private var colorSource: any ConfettiColorSource
     @ObservationIgnored private var numberGenerator: any RandomNumberGenerator & Sendable
     @ObservationIgnored private let displayLinkDriver = DisplayLinkDriver()
     @ObservationIgnored private var canvasSize: CGSize = .zero
+
+    // MARK: - Public Interface
+
+    /// Current render states for drawing confetti particles.
+    ///
+    /// This property provides read-only access to the simulation's render states
+    /// without exposing the internal simulation object, maintaining encapsulation.
+    public var renderStates: [ParticleRenderState] {
+        simulation.renderStates
+    }
+
+    /// The current playback time in seconds.
+    public var currentTime: TimeInterval {
+        simulation.currentTime
+    }
+
+    /// The total duration of the confetti animation in seconds.
+    public var duration: TimeInterval {
+        simulation.duration
+    }
+
+    /// The current playback state.
+    public var state: ConfettiSimulation.State {
+        simulation.state
+    }
 
     // MARK: - Initializer
 

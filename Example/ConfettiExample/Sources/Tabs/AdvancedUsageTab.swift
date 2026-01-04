@@ -133,7 +133,7 @@ private struct AdvancedPlaybackDemo: View {
     var body: some View {
         VStack(spacing: 0) {
             // Confetti canvas
-            ConfettiCanvas(renderStates: player.simulation.renderStates)
+            ConfettiCanvas(renderStates: player.renderStates)
                 .onGeometryChange(for: CGSize.self, of: \.size) { _, size in
                     canvasSize = size
                     player.updateCanvasSize(to: size)
@@ -151,10 +151,10 @@ private struct AdvancedPlaybackDemo: View {
 
     private var playbackInfo: some View {
         VStack(spacing: 8) {
-            Text("Time: \(player.simulation.currentTime, specifier: "%.2f") / \(player.simulation.duration, specifier: "%.1f")s")
+            Text("Time: \(player.currentTime, specifier: "%.2f") / \(player.duration, specifier: "%.1f")s")
                 .font(.headline.monospacedDigit())
 
-            ProgressView(value: player.simulation.currentTime, total: player.simulation.duration)
+            ProgressView(value: player.currentTime, total: player.duration)
                 .padding(.horizontal)
         }
         .padding(.vertical, 12)
