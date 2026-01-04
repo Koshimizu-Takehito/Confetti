@@ -20,9 +20,9 @@ ConfettiCore (internal)
   - Domain models / Physics simulation / Deterministic & testable
 ```
 
-## Internal Example: start → tick
+## Internal Example: start → update
 
-`ConfettiSimulation` advances time using a **fixed time step**. Call `tick` at your display refresh rate.
+`ConfettiSimulation` advances time using a **fixed time step**. Call `update` at your display refresh rate.
 
 ```swift
 import ConfettiCore
@@ -46,13 +46,13 @@ var simulation = ConfettiSimulation(configuration: config)
 var numberGenerator: any RandomNumberGenerator = SystemRandomNumberGenerator()
 
 simulation.start(
-    bounds: CGSize(width: 300, height: 600),
+    area: CGSize(width: 300, height: 600),
     at: .now,
     colorSource: MyColorSource(),
-    using: &numberGenerator
+    randomNumberGenerator: &numberGenerator
 )
 
-simulation.tick(at: .now, bounds: CGSize(width: 300, height: 600))
+simulation.update(at: .now, area: CGSize(width: 300, height: 600))
 ```
 
 ## Deterministic Testing

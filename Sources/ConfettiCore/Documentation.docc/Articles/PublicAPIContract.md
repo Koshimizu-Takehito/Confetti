@@ -22,6 +22,100 @@ The Confetti library follows Semantic Versioning:
 - **Minor** releases: additive changes only (new APIs, new presets, new docs).
 - **Major** releases: breaking changes to the public API contract.
 
+### v2.0.0 Breaking Changes
+
+#### ConfettiSimulation: struct → @Observable class
+
+`ConfettiSimulation` has been changed from a struct to an `@Observable` class:
+
+- **Type change**: `struct` → `@MainActor @Observable public final class`
+- **Mutability**: Methods no longer require `mutating` keyword
+- **Thread safety**: Must be used from MainActor (enforced by `@MainActor`)
+- **State access**: `state` and `configuration` properties are `public private(set)` (read-only from outside)
+- **Observable integration**: State changes are automatically tracked by SwiftUI
+
+This change enables:
+- Direct observation of simulation state in SwiftUI
+- Single Source of Truth (SSoT) architecture in `ConfettiPlayer`
+- Elimination of state duplication and synchronization code
+
+#### ParticleRenderState: Color type change
+
+`ParticleRenderState.color` type has been changed to maintain UI-independence:
+
+- **Type change**: `SwiftUI.Color` → `CGColor`
+- **Reason**: Keep `ConfettiCore` UI-framework independent
+- **Impact**: Canvas rendering requires conversion: `Color(cgColor: state.color)`
+- **Module change**: `import SwiftUI` removed from `ParticleRenderState.swift`
+
+Migration example:
+```swift
+// Before (v1.x)
+Canvas { context, _ in
+    for state in player.renderStates {
+        context.fill(path, with: .color(state.color))  // state.color was SwiftUI.Color
+    }
+}
+
+// After (v2.0)
+Canvas { context, _ in
+    for state in player.simulation.renderStates {
+        context.fill(path, with: .color(Color(cgColor: state.color)))  // Convert CGColor → Color
+    }
+}
+```
+
+#### ConfettiRenderer: struct → class, moved to ConfettiCore
+
+`ConfettiRenderer` has been restructured for better architecture:
+
+- **Type change**: `public struct` → `public final class`
+- **Module change**: `ConfettiPlayback` → `ConfettiCore`
+- **Sendable removed**: `@MainActor` protection makes `Sendable` conformance unnecessary
+- **Mutability**: `mutating` keyword removed from methods (class methods)
+- **Re-export**: Still accessible via `ConfettiPlayback` (re-exported from `ConfettiCore`)
+
+Migration example:
+```swift
+// Before (v1.x)
+var renderer = ConfettiRenderer()
+let states = renderer.update(from: cloud)  // mutating method
+
+// After (v2.0)
+let renderer = ConfettiRenderer()
+let states = renderer.update(from: cloud)  // non-mutating method (class)
+```
+
+#### renderStates location change
+
+Render states are now provided by `ConfettiSimulation` as a computed property:
+
+- **Change**: `ConfettiPlayer.renderStates` → `ConfettiSimulation.renderStates`
+- **Access pattern**: `player.renderStates` → `player.simulation.renderStates`
+- **Implementation**: Cached computed property (recomputes only when cloud changes)
+- **SSoT benefit**: No manual synchronization needed
+- **Performance**: Version-based cache invalidation provides ~180x speedup for repeated access
+
+Migration example:
+```swift
+// Before (v1.x)
+ConfettiCanvas(renderStates: player.renderStates)
+
+// After (v2.0)
+ConfettiCanvas(renderStates: player.simulation.renderStates)
+```
+
+##### Caching mechanism
+
+`ConfettiSimulation.renderStates` uses an internal cache invalidated by `ConfettiCloud.version`:
+
+- **Cache hit**: Returns cached array when `cloud.version` unchanged (< 0.01ms for 1000 accesses)
+- **Cache miss**: Recomputes from `ConfettiRenderer` when cloud mutates
+- **Invalidation**: Automatic on `update()`, `seek()`, `withCloudForTesting()`
+- **Cleanup**: Cache cleared on `stop()`
+
+This optimization eliminates redundant array allocations in 60fps rendering loops while maintaining SSoT architecture.
+
 ## Internal Domain Types
 
 The following types are **internal to ConfettiCore** but have stable contracts that `ConfettiPlayback` depends on:
@@ -42,6 +136,10 @@ They form the *read model* that `ConfettiRenderer` consumes to produce `Particle
   - `traits[0..<aliveCount]`
   - `states[0..<aliveCount]`
 - `compact()` removes dead particles by moving them out of the alive prefix and updates `aliveCount`.
+- `version` is an integer counter that increments on every mutation:
+  - Used for cache invalidation in `ConfettiSimulation.renderStates`
+  - Incremented by `incrementVersion()` after any state modification
+  - Enables efficient detection of cloud changes without deep equality checks
 
 #### ``ConfettoTraits``
 
@@ -68,6 +166,8 @@ To keep room for performance and feature evolution, the following are **not** pa
 
 ## Mutation rules
 
+- `ConfettiSimulation` must be used from `@MainActor` (enforced by the type annotation).
+- `ConfettiSimulation.state` is **read-only** from outside; use public methods (`start`, `pause`, `resume`, `seek`, `stop`) to mutate state.
 - `ConfettiRenderer` treats `ConfettiCloud` as **read-only** output of the simulation.
 - Do not mutate `cloud.states` unless you fully own the simulation loop and accept undefined behavior.
 - The `DEBUG`-only API `withCloudForTesting` exists **for tests** and is not meant for production rendering logic.

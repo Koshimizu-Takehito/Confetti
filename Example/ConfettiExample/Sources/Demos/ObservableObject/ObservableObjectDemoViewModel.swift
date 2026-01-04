@@ -23,9 +23,9 @@ import Foundation
 ///
 /// ```swift
 /// private func observeAndBridgeRenderStates() {
-///     _ = withObservationTracking { player.renderStates } onChange: {
+///     _ = withObservationTracking { player.simulation.renderStates } onChange: {
 ///         Task { @MainActor in
-///             self.renderStates = player.renderStates
+///             self.renderStates = player.simulation.renderStates
 ///             self.observeAndBridgeRenderStates() // Re-register for next change
 ///         }
 ///     }
@@ -110,9 +110,9 @@ final class ObservableObjectDemoViewModel: ObservableObject {
     /// When a change is detected, it updates the published property and re-registers
     /// for the next change, creating a continuous observation bridge.
     private func observeAndBridgeRenderStates() {
-        _ = withObservationTracking { player.renderStates } onChange: { [weak self, player] in
+        _ = withObservationTracking { player.simulation.renderStates } onChange: { [weak self, player] in
             Task { @MainActor [weak self, player] in
-                self?.renderStates = player.renderStates
+                self?.renderStates = player.simulation.renderStates
                 self?.observeAndBridgeRenderStates()
             }
         }

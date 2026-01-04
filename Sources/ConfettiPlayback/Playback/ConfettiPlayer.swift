@@ -36,20 +36,9 @@ import Observation
 /// ```
 @MainActor
 @Observable public final class ConfettiPlayer {
-    // MARK: - Published State
-
-    public private(set) var renderStates: [ParticleRenderState] = []
-    public private(set) var isRunning: Bool = false
-    public private(set) var isPaused: Bool = false
-    public private(set) var currentTime: TimeInterval = 0
-
-    /// Total duration of the playback
-    public var duration: TimeInterval { simulation.duration }
-
     // MARK: - Dependencies
 
-    @ObservationIgnored private var simulation: ConfettiSimulation
-    @ObservationIgnored private var renderer: ConfettiRenderer
+    public let simulation: ConfettiSimulation
     @ObservationIgnored private var colorSource: any ConfettiColorSource
     @ObservationIgnored private var numberGenerator: any RandomNumberGenerator & Sendable
     @ObservationIgnored private let displayLinkDriver = DisplayLinkDriver()
@@ -70,7 +59,6 @@ import Observation
         numberGenerator: some RandomNumberGenerator & Sendable = SystemRandomNumberGenerator()
     ) {
         self.simulation = ConfettiSimulation(configuration: configuration)
-        self.renderer = ConfettiRenderer(initialCapacity: configuration.lifecycle.particleCount)
         self.colorSource = colorSource
         self.numberGenerator = numberGenerator
     }
@@ -81,8 +69,7 @@ import Observation
     /// - Parameter canvasSize: Size of the drawing area
     public func play(canvasSize size: CGSize) {
         canvasSize = size
-        simulation.start(bounds: size, at: .now, colorSource: colorSource, using: &numberGenerator)
-        syncState()
+        simulation.start(area: size, at: .now, colorSource: colorSource, randomNumberGenerator: &numberGenerator)
         startDisplayLink()
     }
 
@@ -92,29 +79,25 @@ import Observation
     public func pause() {
         simulation.pause()
         displayLinkDriver.stop()
-        syncState()
     }
 
     /// Resumes a paused playback.
     public func resume() {
         guard simulation.state.isPaused else { return }
         simulation.resume(at: .now)
-        syncState()
         startDisplayLink()
     }
 
     /// Seeks to a specific time.
     /// - Parameter time: Target time (clamped to 0...duration)
     public func seek(to time: TimeInterval) {
-        simulation.seek(to: time, bounds: canvasSize)
-        syncState()
+        simulation.seek(to: time, area: canvasSize)
     }
 
     /// Stops the playback and resets the state.
     public func stop() {
         displayLinkDriver.stop()
         simulation.stop()
-        syncState()
     }
 
     /// Notifies canvas size changes.
@@ -132,25 +115,10 @@ import Observation
     }
 
     private func tick(at date: Date) {
-        guard simulation.state.isPlaying else {
-            displayLinkDriver.stop()
-            syncState()
-            return
-        }
-        simulation.tick(at: date, bounds: canvasSize)
-        syncState()
-    }
-
-    private func syncState() {
-        isRunning = simulation.state.isRunning
-        isPaused = simulation.state.isPaused
-        currentTime = simulation.currentTime
-        if let cloud = simulation.state.cloud {
-            renderer.update(from: cloud)
-            renderStates = renderer.renderStates
+        if simulation.state.isPlaying {
+            simulation.update(at: date, area: canvasSize)
         } else {
-            renderer.clear()
-            renderStates = []
+            displayLinkDriver.stop()
         }
     }
 }
